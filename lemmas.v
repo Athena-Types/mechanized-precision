@@ -96,23 +96,28 @@ Section HelperLemmas.
   Lemma NonZeroSameSignMulInv : forall (a b : R),
     forall k, k != 0 ->
               NonZeroSameSign (k * a) (k * b) -> NonZeroSameSign a b.
-  Proof.
-    move=> a b k H1 H2.
+  Proof. move=> a b k H1 H2.
          have simp_more: (1 / k * k = 1 * (k / k)) by lra.
          replace a with (1 / k * (k * a)).
          replace b with (1 / k * (k * b)).
          apply (@NonZeroSameSignMul (k * a) (k * b) (1 / k)) => //.
-         give_up.
+         case: (@real_ltP _ k 0 _ _) => //= a_ltP.
+         {
+          suff lt_0: 1 / k < 0 by lra.
+          suff gt_0: 1 / - k > 0 by lra.
+          apply divr_gt0; lra.
+         }
+         {
+           have kgt_0: 0 < k by lra.
+           suff gt_0: 1 / k > 0 by lra.
+           apply divr_gt0; lra.
+         }
          have b_rewrite: (1 / k * (k * b) = (1 / k * k) * b) by lra.
-         rewrite b_rewrite.
-         rewrite simp_more.
-         rewrite mulfV.
+         rewrite b_rewrite. rewrite simp_more. rewrite mulfV.
          rewrite !mul1r. auto. auto.
          have a_rewrite: (1 / k * (k * a) = (1 / k * k) * a) by lra.
-         rewrite a_rewrite.
-         rewrite simp_more.
-         rewrite mulfV.
-         rewrite !mul1r. auto. auto. Admitted.
+         rewrite a_rewrite. rewrite simp_more. rewrite mulfV.
+         rewrite !mul1r. auto. auto. Qed.
 
   Lemma NonZeroSameSignExp : forall (a b : R),
     forall k, (NonZeroSameSign a b) -> (NonZeroSameSign (a `^ k) (b `^ k)).
