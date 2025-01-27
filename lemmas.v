@@ -28,7 +28,12 @@ Section HelperLemmas.
     rewrite /NonZeroSameSign /Symmetric => x y H1.
     case: H1 => H2. lra. lra. Qed.
 
-  (* NB: x is not reflexive *)
+  (* NB: x is not reflexive (needs to be non-zero). *)
+  Lemma nonzero_refl_NonZeroSameSign : forall x, x != 0 -> NonZeroSameSign x x.
+  Proof.
+    move=> x H1. rewrite /NonZeroSameSign.
+    case: (@real_ltP _ x 0 _ _) => //= x_ltP.
+    auto. lra. Qed.
 
   Lemma lt0_NonZeroSameSign : forall x y, x < 0 -> NonZeroSameSign x y -> y < 0.
   Proof. rewrite /NonZeroSameSign. move=> x y H1 H2.
@@ -79,12 +84,25 @@ Section HelperLemmas.
   Lemma NonZeroSameSignMul : forall (a b : R),
     forall k, k != 0 ->
               (NonZeroSameSign a b) -> (NonZeroSameSign (k * a) (k * b)).
-  Proof. Admitted.
+  Proof. move=> a b k H1 H2.
+         apply NonZeroSameSignMulGen.
+         apply nonzero_refl_NonZeroSameSign => //.
+         apply H2. Qed.
 
   Lemma NonZeroSameSignMulInv : forall (a b : R),
     forall k, k != 0 ->
               (NonZeroSameSign (k * a) (k * b) -> NonZeroSameSign a b).
-  Proof. Admitted.
+  Proof. move=> a b k H1 H2.
+         replace a with (((1 / k) * k) * a).
+         replace b with (((1 / k) * k) * b).
+         apply NonZeroSameSignMul.
+         have simplify: (1 / k * k) = 1.
+         have simp_more: (1 / k * k = 1 * (k / k)) by lra.
+         rewrite simp_more.
+         rewrite mulfV.
+         lra.
+         auto.
+         auto. Qed.
 
   Lemma NonZeroSameSignExp : forall (a b : R),
     forall k, (NonZeroSameSign a b) -> (NonZeroSameSign (a `^ k) (b `^ k)).
