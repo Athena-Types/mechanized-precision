@@ -1,26 +1,26 @@
 From Flocq Require Import Core Round Relative.
 From Coq Require Import ZArith Reals Psatz.
-From mathcomp Require Import all_ssreflect.
-From mathcomp Require Import boolp Rstruct.
+From mathcomp Require Import all_ssreflect boolp ssrnum.
+From mathcomp.analysis Require Import sequences exp Rstruct.
 
 Local Open Scope R_scope.
 
 Section RArithFacts.
 
+Notation ln := exp.ln.
+
 Lemma ln_div : 
   forall x y, 0 < x -> 0 < y -> ln (x/y) = ln x - ln y.
 Proof.
-move => x y Hx Hy. rewrite Rdiv_def ln_mult => //.
-rewrite ln_Rinv => //. apply Rinv_0_lt_compat => //.
+move => x y Hx Hy. rewrite Rdiv_def RmultE RinvE RminusE ln_div => //;
+rewrite ssrnum.Num.Theory.posrE; by apply /RltP.
 Qed.
 
 Lemma ln_x_lt_x :
-  forall x, x > 0 -> ln x < x.
+  forall x, x > 0 ->ln x < x.
 Proof.
 move => x Hx.
-rewrite -{2}(ln_exp x). apply ln_increasing; try nra.
-apply Rlt_trans with (1 + x); try nra.
-apply exp_ineq1; nra.
+apply /RltP. apply ln_sublinear. by apply /RltP.
 Qed.
 
 Lemma Rabs_ln_sym : 
@@ -35,23 +35,32 @@ Lemma ln_1_plus_le :
   forall x, x <> 0 -> - 1 < x -> ln (1 + x) <= x.
 Proof.
 move => x Hx H1.
-rewrite -{2}(ln_exp x).
-apply Rlt_le, ln_increasing; [nra|].
-apply exp_ineq1 => //.
+rewrite -{2}(expRK  x).
+apply Rlt_le. apply /RltP. rewrite ltr_ln. 
+rewrite expR_gt1Dx => //. 
+apply /eqP => //. 
+rewrite ssrnum.Num.Theory.posrE; apply /RltP.
+rewrite /ssralg.GRing.zero => //=. nra.
+rewrite ssrnum.Num.Theory.posrE;
+apply expR_gt0.
 Qed.
 
 Lemma ln_le_div : 
   forall x, 0 < x -> x < 1 ->  -ln(1-x) <= x / (1-x).
 Proof.
 move => x H0 Hx.
-rewrite -(ln_exp (x/(1-x))).
-apply Rlt_le, exp_lt_inv.
-rewrite exp_Ropp !exp_ln; try nra.
-apply Rle_lt_trans with (1 + (x/(1-x))); [field_simplify; nra | ].
-apply exp_ineq1. 
+rewrite -(expRK (x/(1-x))).
+apply Rlt_le. apply /RltP. 
+rewrite -ltr_expR.
+rewrite expRN -RinvE !expRK lnK. 
+apply /RltP; 
+apply Rle_lt_trans with (1 + (x/(1-x))); [field_simplify ;nra | ].
+apply /RltP. rewrite expR_gt1Dx => //.
+rewrite /ssralg.GRing.zero => //=. apply /eqP. 
 have Hx0 : x / (1-x) > 0; [|nra]. 
 apply Rdiv_pos_pos => //; nra.
-apply exp_pos.
+rewrite ssrnum.Num.Theory.posrE /ssralg.GRing.zero => //=. 
+apply /RltP; nra.
 Qed.
 
 Lemma ln_le_div_rev : 
@@ -66,7 +75,10 @@ Lemma ln_le_increasing :
 forall x y, 0 < x -> 0 < y -> x <= y -> ln x <= ln y.
 Proof.
 move => x y Hx Hy Hxy.
-destruct Hxy. apply Rlt_le, ln_increasing => //.
+destruct Hxy. apply Rlt_le. apply /RltP. 
+rewrite ltr_ln; [ apply /RltP => // | |];   
+rewrite ssrnum.Num.Theory.posrE /ssralg.GRing.zero => //=;
+                                                        apply /RltP => //.
 rewrite H. by apply Req_le.
 Qed.
 
@@ -108,7 +120,8 @@ Variable prec :  Z.
 Hypothesis Hprec : (Prec_gt_0 prec).
 Notation fexp := (FLX_exp prec).
 
-Notation ln  := (Rpower.ln).
+Notation ln  := (exp.ln).
+Notation exp := expR.
 
 Fact round_preserves_sign_neg :
   forall rnd : R -> Z, Valid_rnd rnd -> 
@@ -145,11 +158,13 @@ Proof.
 move => rnd Hrnd x b Hb.
 set (rx := round beta fexp rnd x).
 case (Req_dec x 0) => Hx0.
-{ exists 0%R; rewrite /rx Hx0 Rabs_R0 expR0 round_0; split => //; nra. }
+{ exists 0%R; rewrite /rx Hx0 Rabs_R0 round_0; split => //; nra. }
 move => Hx H1.
 have Hxx : Rabs (ln (rx /x )) <= b by nra.
-exists (ln (rx/x)); split => //; rewrite exp_ln => //; 
+exists (ln (rx/x)); split => //; rewrite lnK => //. 
                              field_simplify => //.
+rewrite ssrnum.Num.Theory.posrE /ssralg.GRing.zero => //=.
+by apply /RltP. 
 Qed. 
 
 Lemma exp_error_model_le_conversion : 
@@ -161,7 +176,7 @@ forall (x b : R),
 Proof.
 move => rnd Hrnd x b Hb.
 case (Req_dec x 0) => Hx0.
-{ exists 0%R; rewrite  Hx0 Rabs_R0 expR0 round_0; split => //; nra. }
+{ exists 0%R; rewrite  Hx0 Rabs_R0 round_0; split => //; nra. }
 simpl; move => H. apply exp_error_model_conversion_aux => //. 
 case: (Rdichotomy x 0) => Hx1 => //.
 rewrite -(Ropp_involutive (_ / _)) -Rdiv_opp_l -Rdiv_opp_r.
@@ -180,13 +195,13 @@ forall x,
 0 < x -> ln (round beta fexp Zfloor x / x) < 0.
 Proof.
 move => x Hg Hx. rewrite ln_div => //.
-apply Rlt_minus. apply ln_increasing.
-apply round_preserves_sign_pos => //. 
-apply valid_rnd_DN.
-have Hexp : Valid_exp fexp. apply FLX_exp_valid, Hprec.
+apply Rlt_minus; apply /RltP; rewrite ltr_ln; apply /RltP.
 destruct (round_DN_UP_lt beta fexp x) => //.
 apply round_preserves_sign_pos => //.
 apply valid_rnd_DN.
+rewrite /ssralg.GRing.zero => //.
+apply round_preserves_sign_pos => //.
+by apply valid_rnd_DN.
 Qed.
 
 Lemma relative_prec_le_conversion : 
