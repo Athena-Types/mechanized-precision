@@ -178,10 +178,6 @@ Section HelperLemmas.
          apply NonZeroSameSignMulGen.
   Admitted.
 
-  (* Lemma NonZeroSameSignExpInv : forall (a b : R), *)
-  (*   forall k, (NonZeroSameSign (a `^ k) (b `^ k) -> NonZeroSameSign a b). *)
-  (* Proof. Admitted. *)
-
   Lemma le_mul_pos : forall (k a b : R), a <= b -> (`|k| * a <= `|k| * b). Admitted.
   Lemma norm_mul_split : forall (a b : R), `| a * b | = `| a | * `| b |. Admitted.
   Lemma factor_exp : forall (a a' k : R), (a `^ k / a' `^ k = (a / a') `^ k). Admitted.
