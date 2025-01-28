@@ -132,11 +132,51 @@ Section HelperLemmas.
 
   Lemma NonZeroSameSignExp : forall (a b : R),
     forall k, (NonZeroSameSign a b) -> (NonZeroSameSign (a `^ k) (b `^ k)).
-  Proof. Admitted.
+  Proof. rewrite /NonZeroSameSign. move=> a b k H1.
+         (* step 1: b = a * (b / a); rewrite. *)
+         have a_nonzero: a != 0 by lra.
+         have b_rewrite1: b = 1 * b by lra.
+         have b_rewrite2: 1 = a / a. rewrite divff => //.
+         rewrite b_rewrite2 in b_rewrite1.
+         have b_rewrite: b = a * (b / a) by lra.
+         clear b_rewrite1 b_rewrite2.
+         pose proof H1 as H2.
+         rewrite b_rewrite. rewrite b_rewrite in H1.
 
-  Lemma NonZeroSameSignExpInv : forall (a b : R),
-    forall k, (NonZeroSameSign (a `^ k) (b `^ k) -> NonZeroSameSign a b).
-  Proof. Admitted.
+         (* step 2: 0 < (b / a). *)
+         assert (0 < b / a).
+         apply NonZeroSameSignDivPos. apply sym_NonZeroSameSign => //.
+
+         (* step 3: 0 < (b / a) so 0 < (b / a) ^ k *)
+         assert (0 < (b / a) `^ k).
+         apply powR_gt0 => //.
+
+         (* step 4: b ^ k = a ^ k * (b / a) ^ k, so b ^ k must have the same sign as a ^k. *)
+         have split_exp: ((a * (b / a)) `^ k = a `^ k * (b / a) `^ k).
+         Search ((_ * _) `^ _).
+         Search ((-_)`^_).
+         Print powR.
+         rewrite /powR.
+         assert ((a * (b / a) == 0) = false) by lra.
+         assert ((a == 0) = false) by lra.
+         assert ((b / a == 0) = false) by lra.
+         rewrite H3 H4 H5.
+         rewrite /sequences.expR.
+
+         (* rewrite -normedtype.limM. *)
+         Search (sequences.series _ * sequences.series _).
+         Search ((?c * ?a) `^ ?b).
+         Print sequences.expR.
+
+         give_up.
+         (* case: H1 => H3; destruct H3. *)
+         (* Search ((?a * ?b) `^ ?k). *)
+         (* apply powRM => //; lra. *)
+         rewrite split_exp.
+         fold (NonZeroSameSign (a `^ k) (a `^ k * (b / a) `^ k)).
+         replace (a `^ k) with (a `^ k * 1) by lra.
+         apply NonZeroSameSignMulGen.
+  Admitted.
 
   (* Lemma NonZeroSameSignExpInv : forall (a b : R), *)
   (*   forall k, (NonZeroSameSign (a `^ k) (b `^ k) -> NonZeroSameSign a b). *)

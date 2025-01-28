@@ -1,7 +1,7 @@
--Q . ErrorMetrics
+-Q theories ErrorMetrics
 
-lemmas.v
-absolute_prec.v
-relative_prec.v
-error_model.v
-relative_prec_ops.v
+theories/lemmas.v
+theories/absolute_prec.v
+theories/relative_prec.v
+theories/error_model.v
+theories/relative_prec_ops.v
