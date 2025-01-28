@@ -119,6 +119,17 @@ Section HelperLemmas.
          rewrite a_rewrite. rewrite simp_more. rewrite mulfV.
          rewrite !mul1r. auto. auto. Qed.
 
+  Lemma NonZeroSameSignDivPos: forall (a b : R),
+      NonZeroSameSign a b -> 0 < a / b.
+  Proof. rewrite /NonZeroSameSign. move=> a b H1.
+         case H1 => H2; destruct H2.
+         apply divr_gt0 => //.
+         remember (- a) as n. have a_rewrite: (a = - n) by lra. rewrite a_rewrite.
+         remember (- b) as m. have b_rewrite: (b = - m) by lra. rewrite b_rewrite.
+         assert (0 < n) by lra. assert (0 < m) by lra.
+         suff: (0 < n / m) by lra.
+         apply divr_gt0 => //. Qed.
+
   Lemma NonZeroSameSignExp : forall (a b : R),
     forall k, (NonZeroSameSign a b) -> (NonZeroSameSign (a `^ k) (b `^ k)).
   Proof. Admitted.
@@ -127,9 +138,9 @@ Section HelperLemmas.
     forall k, (NonZeroSameSign (a `^ k) (b `^ k) -> NonZeroSameSign a b).
   Proof. Admitted.
 
-  Lemma NonZeroSameSignDivPos : forall (a a' : R),
-    NonZeroSameSign (a) (a') -> 0 < a / a'.
-  Proof. Admitted.
+  (* Lemma NonZeroSameSignExpInv : forall (a b : R), *)
+  (*   forall k, (NonZeroSameSign (a `^ k) (b `^ k) -> NonZeroSameSign a b). *)
+  (* Proof. Admitted. *)
 
   Lemma le_mul_pos : forall (k a b : R), a <= b -> (`|k| * a <= `|k| * b). Admitted.
   Lemma norm_mul_split : forall (a b : R), `| a * b | = `| a | * `| b |. Admitted.
