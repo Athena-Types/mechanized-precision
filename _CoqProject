@@ -3,3 +3,5 @@
 lemmas.v
 absolute_prec.v
 relative_prec.v
+error_model.v
+relative_prec_ops.v

@@ -100,6 +100,8 @@ Qed.
 
 End RArithFacts.
 
+Section ErrorTheorems.
+
 Variable beta : radix.
 Variable prec :  Z.
 
@@ -114,10 +116,9 @@ Fact round_preserves_sign_neg :
 Proof.
 move => rnd Hrnd x Hx.
 have Hrx : round beta fexp rnd x <> 0%R.
-{ apply: round_neq_0_negligible_exp => //; [| |nra]. 
-apply FLX_exp_valid, Hprec. 
+{ apply: round_neq_0_negligible_exp => //; [ |nra]. 
 apply negligible_exp_FLX, Hprec. }
-case: (@round_le beta fexp _ _ _ x 0); [apply FLX_exp_valid, Hprec | nra |
+case: (@round_le beta fexp _ _ _ x 0); [ nra |
                    rewrite (round_0 beta fexp _) =>//  | rewrite round_0 => //=].
 Qed.
 
@@ -126,10 +127,9 @@ forall rnd : R -> Z, Valid_rnd rnd ->
   forall x, 0 < x -> 0 < round beta fexp rnd x.
 move => rnd Hrnd x Hx.
 have Hrx : round beta fexp rnd x <> 0%R.
-{ apply: round_neq_0_negligible_exp => //; [| | nra].
-apply FLX_exp_valid, Hprec.
+{ apply: round_neq_0_negligible_exp => //; [ | nra].
 apply negligible_exp_FLX, Hprec. } 
-case: (@round_le beta fexp _ _ _ 0 x); [apply FLX_exp_valid, Hprec | nra |
+case: (@round_le beta fexp _ _ _ 0 x); [ nra |
                    rewrite (round_0 beta fexp _) =>//  | rewrite round_0 => //=].
 move => H0. rewrite H0 in Hrx => //=.
 Qed.
@@ -223,7 +223,7 @@ Theorem relative_prec_error :
             let b:= bpow beta (-prec + 1)%Z in 
             Rabs (ln (x/round beta fexp rnd x)) <= b / (1- b).
 Proof.
-move => rnd Hrnd Hprec x Hx0.
+move => rnd Hrnd Hprec1 x Hx0.
 have Hp: bpow beta (-prec + 1) < bpow beta 0 => //.
 { apply bpow_lt; lia. } 
 case: (Rdichotomy x 0) => // Hx. 
@@ -256,7 +256,7 @@ Theorem exp_error_model:
   let b:= bpow beta (-prec + 1)%Z in 
   exists (eps : R), (Rabs eps <= b/(1-b)) /\ (round beta fexp rnd x = x * (exp eps)).
 Proof.
-move => rnd Hrnd Hprec x Hx.
+move => rnd Hrnd Hprec1 x Hx.
 apply exp_error_model_le_conversion => //.
 apply Rdiv_lt_0_compat.
 apply bpow_gt_0.
@@ -265,3 +265,5 @@ have Hp: bpow beta (-prec + 1) < bpow beta 0.
 move => _.
 apply relative_prec_error => //.
 Qed.
+
+End ErrorTheorems.
