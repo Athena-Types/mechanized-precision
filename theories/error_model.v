@@ -1,7 +1,7 @@
 From Flocq Require Import Core Round Relative.
 From Coq Require Import ZArith Reals Psatz.
 From mathcomp Require Import all_ssreflect boolp ssrnum.
-From mathcomp.analysis Require Import sequences exp Rstruct.
+From mathcomp Require Import sequences exp Rstruct.
 
 Local Open Scope R_scope.
 

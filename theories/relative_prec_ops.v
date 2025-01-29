@@ -3,7 +3,7 @@ From Flocq Require Import Core.
 From Coq Require Import Reals Psatz.
 
 From mathcomp Require Import all_ssreflect.
-From mathcomp.analysis Require Import Rstruct sequences exp.
+From mathcomp Require Import Rstruct sequences exp.
 
 Local Open Scope R_scope.
 
