@@ -1,24 +1,35 @@
 Require Import ErrorMetrics.lemmas.
+
 Local Open Scope ring_scope.
 
+(** * Section 3.1. Relative precision. *)
 Section RelPrec.
 
   Context {R : realType}.
+
+  Variables (e : R).
+  (* TODO: change with canonical def in mathcomp *)
+  Parameter e_is_e : ln(e) = 1.
 
   Definition RelPrec (a a' α : R) : Prop :=
     α >= 0 /\ NonZeroSameSign a a' /\
     `|ln(a / a')| <= α.
 
+  Definition RelPrecAlt (a a' α : R) : Prop :=
+    α >= 0 /\ exists u, a/a' = e `^ u /\ `|u| <= α.
+
 End RelPrec.
 
 Notation "a ~ a' ; rp( α )" := (RelPrec a a' α) (at level 99).
 
-(* Section 3.2. *)
+(** ** Section 3.2. Elemetary properties. *)
 Section RPElementaryProperties.
 
   Context {R : realType}.
   Variables (a a' α : R).
   Hypothesis Halpha : 0 <= α.
+
+  (** *** Property 1. *)
 
   Theorem RPProp1 : (a ~ a' ; rp(α)) -> (a' ~ a ; rp(α)).
   Proof. rewrite /RelPrec /NonZeroSameSign.
@@ -53,6 +64,8 @@ Section RPElementaryProperties.
          by [lra].
          Qed.
 
+  (** *** Property 2. *)
+
   Theorem RPProp2 : forall (δ : R), (a ~ a' ; rp(α)) -> 0 <= α -> α <= δ -> (a ~ a' ; rp(δ)).
   Proof. rewrite /RelPrec.
          move=> del [H2 [H3 H4]] H5 H6. repeat split; auto.
@@ -60,20 +73,35 @@ Section RPElementaryProperties.
          rewrite (@le_trans _ _ α) => //.
          Qed.
 
+  (** *** Property 3. *)
+
   Theorem RPProp3 : forall (k : R), (a ~ a'; rp(α)) -> k != 0 -> (k * a ~ k * a' ; rp(α)).
   Proof. rewrite /RelPrec; move => k [H1 [H2 H3]] H4. repeat split; auto.
          apply (NonZeroSameSignMul _ _ k) => //.
          rewrite -mulf_div. rewrite divff => //. rewrite mul1r => //. Qed.
 
-  Theorem RPProp4 : forall (k : R), (a ~ a' ; rp(α)) -> 0 <= α -> a `^ k ~ a' `^ k ; rp(`|k|*α).
+  (** *** Property 4.
+      In Olver (1978), property 4 is stated as follows. If [k] is any real
+      number, then [a ^ k ≃ a'^k ; rp (|k|α)]. However, this does not make
+      sense for negative [a] and [a']. Accordingly, we adjust the property
+      statement to take absolute values first: [|a| ^ k ≃ |a'|^k ; rp (|k|α)].
+      The adjusted property is stated and proved below.
+   *)
+
+  Theorem RPProp4 : forall (k : R),
+      (a ~ a' ; rp(α)) -> 0 <= α -> `|a| `^ k ~ `|a'| `^ k ; rp(`|k|*α).
   Proof. rewrite /RelPrec. move => k [H1 [H2 H3]] H4. repeat split; auto.
          rewrite mulr_ge0 => //.
          apply (NonZeroSameSignExp a a' k) => //.
-         rewrite (factor_exp a a' k). rewrite ln_powR.
+         rewrite (factor_exp `|a| `|a'| k). rewrite ln_powR.
          rewrite norm_mul_split.
          suff key_rel : `|ln (R:=R) (a / a')| <= α.
-         apply (le_mul_pos k _ _) => //. apply H3 => //.
+         apply (le_mul_pos k _ _) => //.
+         rewrite NonZeroSameSignDivAbs => //.
+         apply H3 => //.
   Qed.
+
+  (** *** Property 5. *)
 
   Theorem RPProp5 : forall (b b' β : R),
       a ~ a' ; rp(α) ->  b ~ b' ; rp(β) -> 0 <= β -> a * b ~ a' * b' ; rp(α + β).
@@ -105,6 +133,8 @@ Section RPElementaryProperties.
          rewrite subrKA => //.
          rewrite -norm_simpl in Hnormleq.
          apply (@le_trans _ _ _ _ _ Hnormleq Haddleq). Qed.
+
+  (** *** Property 6. *)
 
   Theorem RPProp6 : forall (a'' δ : R ),
       a ~ a' ; rp(α) -> a' ~ a'' ; rp(δ) -> 0 <= δ -> a ~ a'' ; rp(α + δ).
@@ -138,7 +168,7 @@ Section RPElementaryProperties.
 
 End RPElementaryProperties.
 
-(* Section 3.3 *)
+(** ** Section 3.3. Addition and subtraction. *)
 Section RPAddSub.
   Context {R : realType}.
   Variables (a a' b b' α β : R).
@@ -149,12 +179,12 @@ Section RPAddSub.
 
   Hypothesis Halpha : 0 <= α.
 
-  (* Theorem 3.1 *)
+  (** *** Theorem 3.1 *)
   Theorem RPAdd : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
                   a + b ~ a' + b'; rp(ln(a' * (e `^ α) +  b * (e `^ β) / (a' + b') )).
     Admitted.
 
-  (* Theorem 3.2 *)
+  (** *** Theorem 3.2 *)
   Theorem RPSub : a ~ a' ; rp(α) -> b ~ b' ; rp(β) -> `|a'| * (e `^ -α) > `|b'| * (e `^ β) ->
                   a + b ~ a' + b'; rp(ln(a' * (e `^ α) -  b * (e `^ -β) / (a' - b') )).
     Admitted.

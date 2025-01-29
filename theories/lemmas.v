@@ -130,53 +130,70 @@ Section HelperLemmas.
          suff: (0 < n / m) by lra.
          apply divr_gt0 => //. Qed.
 
+  Lemma NonZeroSameSignDivAbs: forall (a b : R),
+      NonZeroSameSign a b -> `|a| / `|b| = a / b.
+  Proof. rewrite /NonZeroSameSign. move=> a b H1.
+         case: (@real_ltP _ a 0 _ _) => //= a_ltP.
+         {
+           have b_lt_0: b < 0 by lra.
+           rewrite !ltr0_norm.
+           rewrite divrNN => //.
+           auto. auto.
+         }
+         have a_gt_0: 0 < a by lra.
+         have b_gt_0: 0 < b by lra.
+         rewrite !ger0_norm => //.
+         lra. Qed.
+
+  Lemma NonZeroSameSignAbs : forall (a b : R), a != 0 -> b != 0 -> NonZeroSameSign `|a| `|b|.
+  Proof. rewrite /NonZeroSameSign. move=> a b H1 H2.
+         left. split; rewrite normr_gt0 => //. Qed.
+
   Lemma NonZeroSameSignExp : forall (a b : R),
-    forall k, (NonZeroSameSign a b) -> (NonZeroSameSign (a `^ k) (b `^ k)).
+    forall k, (NonZeroSameSign a b) -> (NonZeroSameSign (`|a| `^ k) (`|b| `^ k)).
   Proof. rewrite /NonZeroSameSign. move=> a b k H1.
-         (* step 1: b = a * (b / a); rewrite. *)
+         (* Setup some basic facts to share *)
          have a_nonzero: a != 0 by lra.
-         have b_rewrite1: b = 1 * b by lra.
-         have b_rewrite2: 1 = a / a. rewrite divff => //.
+         have b_nonzero: b != 0 by lra.
+         have a_abs_nonzer0: `|a| != 0. rewrite normr_eq0 => //.
+         have b_abs_nonzer0: `|b| != 0. rewrite normr_eq0 => //.
+         have a_abs_gt0: 0 < `|a|. rewrite normr_gt0 => //.
+         have b_abs_gt0: 0 < `|b|. rewrite normr_gt0 => //.
+
+         (* step 1: |b| = |a| * (|b| / |a|); rewrite. *)
+         have b_rewrite1: `|b| = 1 * `|b| by lra.
+         have b_rewrite2: 1 = `|a| / `|a|. rewrite divff => //.
          rewrite b_rewrite2 in b_rewrite1.
-         have b_rewrite: b = a * (b / a) by lra.
+         have b_rewrite: `|b| = `|a| * (`|b| / `|a|) by lra.
          clear b_rewrite1 b_rewrite2.
          pose proof H1 as H2.
-         rewrite b_rewrite. rewrite b_rewrite in H1.
+         rewrite b_rewrite.
 
-         (* step 2: 0 < (b / a). *)
-         assert (0 < b / a).
-         apply NonZeroSameSignDivPos. apply sym_NonZeroSameSign => //.
+         (* step 2: 0 < (|b| / |a|). *)
+         assert (0 < `|b| / `|a|).
+         apply divr_gt0 => //.
 
          (* step 3: 0 < (b / a) so 0 < (b / a) ^ k *)
-         assert (0 < (b / a) `^ k).
+         assert (0 < (`|b| / `|a|) `^ k).
          apply powR_gt0 => //.
 
          (* step 4: b ^ k = a ^ k * (b / a) ^ k, so b ^ k must have the same sign as a ^k. *)
-         have split_exp: ((a * (b / a)) `^ k = a `^ k * (b / a) `^ k).
-         Search ((_ * _) `^ _).
-         Search ((-_)`^_).
-         Print powR.
-         rewrite /powR.
-         assert ((a * (b / a) == 0) = false) by lra.
-         assert ((a == 0) = false) by lra.
-         assert ((b / a == 0) = false) by lra.
-         rewrite H3 H4 H5.
-         rewrite /sequences.expR.
+         have split_exp: ((`|a| * (`|b| / `|a|)) `^ k = `|a| `^ k * (`|b| / `|a|) `^ k).
+         apply powRM; lra.
 
-         (* rewrite -normedtype.limM. *)
-         Search (sequences.series _ * sequences.series _).
-         Search ((?c * ?a) `^ ?b).
-         Print sequences.expR.
-
-         give_up.
-         (* case: H1 => H3; destruct H3. *)
-         (* Search ((?a * ?b) `^ ?k). *)
-         (* apply powRM => //; lra. *)
+         (* step 5: use NonZeroSameSignMulGen with previous facts. *)
          rewrite split_exp.
-         fold (NonZeroSameSign (a `^ k) (a `^ k * (b / a) `^ k)).
-         replace (a `^ k) with (a `^ k * 1) by lra.
+         fold (NonZeroSameSign (`|a| `^ k) (`|a| `^ k * (`|b| / `|a|) `^ k)).
+         replace (`|a| `^ k) with (`|a| `^ k * 1) by lra.
          apply NonZeroSameSignMulGen.
-  Admitted.
+         have a_k_ne0: (`|a| `^ k != 0).
+         rewrite lt0r_neq0 => //.
+         apply powR_gt0 => //.
+         have a_id: (`|a| `^ k * 1 = `|a| `^ k) by lra.
+         rewrite a_id.
+         apply nonzero_refl_NonZeroSameSign => //.
+         left. lra.
+  Qed.
 
   Lemma le_mul_pos : forall (k a b : R), a <= b -> (`|k| * a <= `|k| * b). Admitted.
   Lemma norm_mul_split : forall (a b : R), `| a * b | = `| a | * `| b |. Admitted.
