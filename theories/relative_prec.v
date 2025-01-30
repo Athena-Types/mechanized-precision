@@ -7,9 +7,7 @@ Section RelPrec.
 
   Context {R : realType}.
 
-  Variables (e : R).
-  (* TODO: change with canonical def in mathcomp *)
-  Parameter e_is_e : ln(e) = 1.
+  Definition e := @sequences.expR R 1.
 
   Definition RelPrec (a a' α : R) : Prop :=
     α >= 0 /\ NonZeroSameSign a a' /\
@@ -172,10 +170,6 @@ End RPElementaryProperties.
 Section RPAddSub.
   Context {R : realType}.
   Variables (a a' b b' α β : R).
-
-  Variables (e : R).
-  (* TODO: change with canonical def in mathcomp *)
-  Parameter e_is_e : ln(e) = 1.
 
   Hypothesis Halpha : 0 <= α.
 
