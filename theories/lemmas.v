@@ -195,6 +195,69 @@ Section HelperLemmas.
          left. lra.
   Qed.
 
-  Lemma norm_mul_split : forall (a b : R), `| a * b | = `| a | * `| b |. Admitted.
+  Lemma norm_mul_split : forall (a b : R), `| a * b | = `| a | * `| b |.
+  Proof. move=> a b.
+         case: (@real_ltP _ a 0 _ _) => //= a_ltP.
+         {
+          case: (@real_ltP _ b 0 _ _) => //= b_ltP.
+          {
+            have a_b_gt0: (0 < a * b).
+            rewrite nmulr_rgt0 => //.
+            rewrite gtr0_norm => //.
+            rewrite !ltr0_norm => //.
+            lra.
+          }
+          {
+            case: (real_eqP b) => //= b_eq0.
+            {
+              have a_b_le0: (a * b <= 0).
+              rewrite mulr_le0_ge0 => //. lra.
+              rewrite ltr0_norm => //.
+              rewrite ltr0_norm => //.
+              rewrite gtr0_norm => //.
+              lra.
+              lra.
+              assert (a != 0) by lra.
+              assert (a * b != 0).
+              apply mulf_neq0 => //.
+              lra.
+            }
+            {
+              rewrite !b_eq0.
+              assert (a * 0 = 0) by lra.
+              rewrite H.
+              rewrite !normr0.
+              lra.
+            }
+          }
+         }
+         {
+          case: (real_eqP a) => //= a_eq0.
+          {
+            case: (@real_ltP _ b 0 _ _) => //= b_ltP.
+            {
+              assert (0 < a) by lra.
+              assert (a * b < 0).
+              rewrite nmulr_llt0 => //.
+              rewrite ltr0_norm => //.
+              rewrite gtr0_norm => //.
+              rewrite ltr0_norm => //.
+              lra.
+            }
+            {
+              rewrite !ger0_norm => //.
+              rewrite mulr_ge0 => //.
+            }
+          }
+          {
+            rewrite !a_eq0.
+            assert (0 * b = 0) by lra.
+            rewrite H.
+            rewrite !normr0.
+            lra.
+          }
+         }
+  Qed.
+
   Lemma factor_exp : forall (a a' k : R), (a `^ k / a' `^ k = (a / a') `^ k). Admitted.
 End HelperLemmas.
