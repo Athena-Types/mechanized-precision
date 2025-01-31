@@ -97,6 +97,10 @@ Section RPElementaryProperties.
          apply ler_pM => //.
          rewrite NonZeroSameSignDivAbs => //.
          apply H3 => //.
+         unfold NonZeroSameSign in H2.
+         rewrite normr_gt0 => //. lra.
+         unfold NonZeroSameSign in H2.
+         rewrite normr_gt0 => //. lra.
   Qed.
 
   (** *** Property 5. *)

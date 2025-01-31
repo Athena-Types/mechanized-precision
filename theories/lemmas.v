@@ -259,5 +259,18 @@ Section HelperLemmas.
          }
   Qed.
 
-  Lemma factor_exp : forall (a a' k : R), (a `^ k / a' `^ k = (a / a') `^ k). Admitted.
+  (* Lemma factor_exp : forall (a a' k : R), 0 < a -> 0 < a' -> (a `^ k / a' `^ k = (a / a') `^ k). *)
+  Lemma factor_exp : forall (a a' k : R), 0 < a -> 0 < a' -> (a `^ k / a' `^ k = (a / a') `^ k).
+    move=> a a' k a_gt0 a'_gt0.
+    have a_ne0: (a == 0 = false). lra.
+    have a'_ne0: (a' == 0 = false). lra.
+    have aa'_ge0: (0 < a / a'). apply divr_gt0 => //.
+    have aa'_ne0: (a / a' == 0 = false). lra.
+    unfold powR.
+    rewrite a_ne0 a'_ne0 aa'_ne0.
+    rewrite -expRN.
+    rewrite -exp.expRD.
+    rewrite -GRing.mulrBr.
+    rewrite ln_div => //.
+  Qed.
 End HelperLemmas.
