@@ -94,7 +94,7 @@ Section RPElementaryProperties.
          rewrite (factor_exp `|a| `|a'| k). rewrite ln_powR.
          rewrite norm_mul_split.
          suff key_rel : `|ln (R:=R) (a / a')| <= α.
-         apply (le_mul_pos k _ _) => //.
+         apply ler_pM => //.
          rewrite NonZeroSameSignDivAbs => //.
          apply H3 => //.
   Qed.
