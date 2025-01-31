@@ -130,6 +130,10 @@ Section HelperLemmas.
          suff: (0 < n / m) by lra.
          apply divr_gt0 => //. Qed.
 
+  Lemma DivPosNonZeroSameSign: forall (a b : R),
+      0 < a / b -> NonZeroSameSign a b.
+  Proof. Admitted.
+
   Lemma NonZeroSameSignDivAbs: forall (a b : R),
       NonZeroSameSign a b -> `|a| / `|b| = a / b.
   Proof. rewrite /NonZeroSameSign. move=> a b H1.
@@ -259,7 +263,6 @@ Section HelperLemmas.
          }
   Qed.
 
-  (* Lemma factor_exp : forall (a a' k : R), 0 < a -> 0 < a' -> (a `^ k / a' `^ k = (a / a') `^ k). *)
   Lemma factor_exp : forall (a a' k : R), 0 < a -> 0 < a' -> (a `^ k / a' `^ k = (a / a') `^ k).
     move=> a a' k a_gt0 a'_gt0.
     have a_ne0: (a == 0 = false). lra.
@@ -273,4 +276,5 @@ Section HelperLemmas.
     rewrite -GRing.mulrBr.
     rewrite ln_div => //.
   Qed.
+
 End HelperLemmas.

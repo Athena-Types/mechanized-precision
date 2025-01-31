@@ -9,6 +9,12 @@ Section RelPrec.
 
   Definition e := @sequences.expR R 1.
 
+  Lemma ln_e : ln e = 1.
+  Proof.
+    unfold e.
+    rewrite expRK => //.
+  Qed.
+
   Definition RelPrec (a a' α : R) : Prop :=
     α >= 0 /\ NonZeroSameSign a a' /\
     `|ln(a / a')| <= α.
@@ -16,6 +22,49 @@ Section RelPrec.
   Definition RelPrecAlt (a a' α : R) : Prop :=
     α >= 0 /\ exists u, a/a' = e `^ u /\ `|u| <= α.
 
+  Theorem RelPrecAltEquiv (a a' α : R) : RelPrec a a' α <-> RelPrecAlt a a' α.
+  Proof. rewrite /RelPrec /RelPrecAlt. split. move=> [H1 [H2 H3]].
+         split; try split; auto.
+         {
+           exists (ln (R:=R) (a / a')).
+           split; auto.
+           unfold powR.
+           rewrite expR_eq0.
+           rewrite ln_e.
+           rewrite mulr1.
+           Search sequences.expR.
+           rewrite lnK => //.
+           apply NonZeroSameSignDivPos => //.
+         }
+         {
+           move=> [H1 [u [H2 H3]]].
+           split; try split; auto.
+           assert (0 < e `^ u).
+           case: (real_eqP (e `^ u)) => //= exp_eq0.
+           {
+             have pow_ge0: 0 <= e `^ u.
+             apply powR_ge0.
+             lra.
+           }
+           {
+             Check powR_eq0_eq0.
+             apply powR_eq0_eq0 in exp_eq0.
+             Search (sequences.expR).
+             assert (e == 0 = true) by lra.
+             assert (e == 0 = false).
+             apply expR_eq0.
+             rewrite H in H0.
+             discriminate.
+           }
+           rewrite -H2 in H.
+           apply DivPosNonZeroSameSign => //.
+           assert (ln (R:=R) (a / a') = ln (R:=R) (e `^ u)). congruence.
+           Search (ln).
+           assert (ln (R:=R) (e `^ u) = u).
+           rewrite ln_powR. rewrite ln_e. lra.
+           congruence.
+         }
+         Qed.
 End RelPrec.
 
 Notation "a ~ a' ; rp( α )" := (RelPrec a a' α) (at level 99).
@@ -179,7 +228,40 @@ Section RPAddSub.
 
   (** *** Theorem 3.1 *)
   Theorem RPAdd : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
-                  a + b ~ a' + b'; rp(ln(a' * (e `^ α) +  b * (e `^ β) / (a' + b') )).
+                  a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b * (e `^ β)) / (a' + b') )).
+  Proof. rewrite /RelPrec. move=> [H1 [H2 H3]] [H4 [H5 H6]].
+         suff a'_le_a: a' <= a.
+         suff b'_le_b: a' <= a.
+         suff sym_arg: 1 <= (a + b) / (a' + b').
+         suff sign_ass: 0 < a /\ 0 < b /\ 0 < a' /\ 0 < b'.
+         split; try split.
+         {
+           give_up.
+         }
+         {
+           rewrite /NonZeroSameSign. lra.
+         }
+         {
+           rewrite ger0_norm => // .
+           (* Search sequences.expR. *)
+           (* Search (_`^_ <=  _). *)
+           (* rewrite expRK. *)
+
+
+           rewrite !ln_div. rewrite ln_div in H3. rewrite ln_div in H6.
+           have a_ineq: a <= a' * e `^ α.
+           rewrite lnM.
+           Search ln.
+           rewrite -ln_powR.
+           apply lerB.
+
+           lra.
+           rewrite ln_ge0 => //.
+         }
+         give_up.
+
+         give_up.
+    rewrite RPProp3.
     Admitted.
 
   (** *** Theorem 3.2 *)
