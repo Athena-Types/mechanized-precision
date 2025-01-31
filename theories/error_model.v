@@ -267,16 +267,19 @@ Qed.
 Theorem exp_error_model: 
   forall rnd : R -> Z, Valid_rnd rnd ->
   ( 1 < prec)%Z -> 
-  forall (x : R), x <> 0 ->
+  forall (x : R), 
   let b:= bpow beta (-prec + 1)%Z in 
   exists (eps : R), (Rabs eps <= b/(1-b)) /\ (round beta fexp rnd x = x * (exp eps)).
 Proof.
-move => rnd Hrnd Hprec1 x Hx.
+move => rnd Hrnd Hprec1 x.
+have Hp: bpow beta (-prec + 1) < 1.
+{ suff : bpow beta (-prec + 1) < bpow beta 0 => //.
+ apply bpow_lt. lia. } 
+case : (Req_dec x 0) => // H0.
+{ exists 0; split; try nra. rewrite Rabs_R0. apply Rlt_le, Rdiv_lt_0_compat; 
+    [apply bpow_gt_0| nra]. rewrite H0 round_0; nra. } 
 apply exp_error_model_le_conversion => //.
-apply Rdiv_lt_0_compat.
-apply bpow_gt_0.
-have Hp: bpow beta (-prec + 1) < bpow beta 0.
-{ apply bpow_lt. lia. } apply Rlt_0_minus. simpl in Hp; nra.
+apply Rdiv_lt_0_compat; [apply bpow_gt_0 | nra].
 move => _.
 apply relative_prec_error => //.
 Qed.
