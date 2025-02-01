@@ -46,9 +46,7 @@ Section RelPrec.
              lra.
            }
            {
-             Check powR_eq0_eq0.
              apply powR_eq0_eq0 in exp_eq0.
-             Search (sequences.expR).
              assert (e == 0 = true) by lra.
              assert (e == 0 = false).
              apply expR_eq0.
@@ -58,7 +56,6 @@ Section RelPrec.
            rewrite -H2 in H.
            apply DivPosNonZeroSameSign => //.
            assert (ln (R:=R) (a / a') = ln (R:=R) (e `^ u)). congruence.
-           Search (ln).
            assert (ln (R:=R) (e `^ u) = u).
            rewrite ln_powR. rewrite ln_e. lra.
            congruence.
@@ -283,7 +280,6 @@ Section RPAddSub.
            rewrite -normrN.
            rewrite ler_norm => //.
            lra.
-           Search implb.
            assert (@e R != 0 = true).
            assert (0 <@e R). apply expR_gt0.
            lra.
