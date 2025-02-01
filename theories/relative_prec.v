@@ -224,9 +224,15 @@ Section RPAddSub.
   Hypothesis Hbeta : 0 <= β.
 
   (* helper lemmas *)
-  Lemma e_exp_ge: forall (a b : R), a <= b -> 0 <= b -> (e `^ a) <= (e `^ b).
-  Proof. Admitted.
+  Lemma e_exp_ge: forall (a b : R), a <= b  -> (e `^ a) <= (e `^ b).
+  Proof.
+  move => a b H1.
+  rewrite -ler_ln; [rewrite !ln_powR ln_e; nra | | ].
+  all : rewrite posrE; apply powR_gt0, expR_gt0.
+  Qed.
+
   Lemma e_exp_ge1 : forall (p : R), 0 <= p -> 1 <= e `^ p.
+
   Proof. move=> p H1. Admitted.
 
   Lemma e_exp_bigger: forall (x y: R), 0 <= x -> 0 <= y -> x <= x * e `^ y.
@@ -234,6 +240,7 @@ Section RPAddSub.
          apply ler_peMr => //.
          apply e_exp_ge1 => //.
   Qed.
+
 
   Lemma div_mul_id: (forall (x y : R), x != 0 -> ( y / x ) * x = y).
   Proof. move=>x y H1. rewrite -mulrA. field. auto. Qed.
