@@ -15,6 +15,21 @@ Section RelPrec.
     rewrite expRK => //.
   Qed.
 
+  Lemma ln_pow_id : forall u, ln (R:=R) (e `^ u) = u.
+  Proof. move=> u. unfold powR.
+         rewrite expR_eq0. rewrite (@expRK R) ln_e mulr1 => //.
+  Qed.
+
+  Lemma pow_ln_id : forall u, 0 < u -> (e `^ (ln u)) = u.
+  Proof. move=> u H1.
+         unfold powR.
+         rewrite expR_eq0.
+         rewrite expRM (@lnK R). rewrite ln_e. rewrite powRr1 => //.
+         lra.
+         have gt0: (0 < u) by lra.
+         apply gt0.
+         Qed.
+
   Definition RelPrec (a a' α : R) : Prop :=
     α >= 0 /\ NonZeroSameSign a a' /\
     `|ln(a / a')| <= α.
@@ -391,10 +406,24 @@ Section RPAddSub.
   Theorem RPAdd (a a' b b' : R) : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
                   a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b * (e `^ β)) / (a' + b') )).
   Proof. move=> A1 B1.
+         (* suff a'agt0: (0 < a' / a ). *)
+         (* suff b'bgt0: (0 < b' / b ). *)
+         (* have ane0: a != 0. unfold RelPrec in A1. unfold NonZeroSameSign in A1. lra. *)
+         (* have bne0: b != 0. unfold RelPrec in B1. unfold NonZeroSameSign in B1. lra. *)
+         (* have a'ne0: a' != 0. unfold RelPrec in A1. unfold NonZeroSameSign in A1. lra. *)
+         (* have b'ne0: b' != 0. unfold RelPrec in B1. unfold NonZeroSameSign in B1. lra. *)
+         (* suff a_p_bne0: a + b != 0. *)
+         (* suff a'_p_b'ne0: a' + b' != 0. *)
          case: (@real_ltP _ 0 a _ _) => //= a_ltP.
          {
+          suff a'gt0: 0 < a'.
+          have age0: 0 <= a by lra.
+          have a'ge0: 0 <= a' by lra.
           case: (@real_ltP _ 0 b _ _) => //= b_ltP.
           {
+            suff b'gt0: 0 < b'.
+            have bge0: 0 <= b by lra.
+            have b'ge0: 0 <= b' by lra.
             case: (@real_leP _ (a' + b') (a + b)) => //= ab_ltP.
             {
               apply RPAddCore => //.
@@ -402,15 +431,83 @@ Section RPAddSub.
             {
               apply RPProp1.
               apply RPProp1 in A1. apply RPProp1 in B1.
-              Check RPAddCore.
               have ab_leP: (a + b <= a' + b') by lra.
+              have A1': (RelPrecAlt a' a α). apply RelPrecAltEquiv => //.
+              have B1': (RelPrecAlt b' b β). apply RelPrecAltEquiv => //.
               unfold RelPrec in A1.
               unfold RelPrec in B1.
               unfold NonZeroSameSign in *.
-              have a'_lt0: (0 < a') by lra.
-              have b'_lt0: (0 < b') by lra.
-              pose proof (@RPAddCore a' a b' b A1 B1 a'_lt0 b'_lt0 ab_leP) as rp_sym.
+              pose proof (@RPAddCore a' a b' b A1 B1 a'gt0 b'gt0 ab_leP) as rp_sym.
+              rewrite RelPrecAltEquiv in rp_sym. rewrite RelPrecAltEquiv. unfold RelPrecAlt in *.
+              destruct rp_sym as [H1 [u [H2 H3]]].
+              destruct A1' as [A1' [u1 [A2' A3']]].
+              destruct B1' as [B1' [u2 [B2' B3']]].
+
+              have a_eq: (a' = a * e `^ u1).
+              rewrite -A2'. rewrite mulrC. rewrite div_mul_id => //. lra.
+              have b_eq: (b' = b * e `^ u2).
+              rewrite -B2'. rewrite mulrC. rewrite div_mul_id => //. lra.
+
+              split; try split; try auto.
+              apply ln_ge0.
+              rewrite -(@ler_pMl R ((a' * e `^ α + b * e `^ β) / (a' + b')) (a' + b')).
+              rewrite div_mul_id => //.
+              rewrite lerD => //; try rewrite e_exp_bigger => //.
+
+              rewrite b_eq => //.
+              apply ler_pM => //.
+              apply powR_ge0 => //.
+              apply e_exp_ge => //.
+              apply ler_normlW => //.
+              lra.
+              lra.
+
+              exists u. split; try auto.
+              assert (ln (R := R) ((a' + b') / (a + b)) = ln (R := R) (e `^ u)). f_equal => //.
+              assert (ln (R := R) (a' / a) = ln (R := R) (e `^ u1)). f_equal=> //.
+              assert (ln (R := R) (b' / b) = ln (R := R) (e `^ u2)). f_equal=> //.
+              rewrite ln_pow_id in H.
+              rewrite ln_pow_id in H0.
+              rewrite ln_pow_id in H4.
+              rewrite a_eq b_eq.
+              rewrite -H -H0 -H4.
+              rewrite !pow_ln_id => //.
+              assert ((a * (a' / a)) = (a' * (a / a))). give_up.
+              rewrite H5. rewrite divff. rewrite mulr1.
+              assert ((b * (b' / b)) = (b' * (b / b))). give_up.
+              rewrite H6. rewrite divff. rewrite mulr1.
+              rewrite ger0_norm.
+              rewrite !ln_div.
+              rewrite lerB => //.
+              rewrite ler_ln.
+              rewrite lerD => //.
+              rewrite e_exp_bigger => //.
+              rewrite b_eq.
+              rewrite ler_pM => //.
+              rewrite powR_ge0 => //.
+              rewrite e_exp_ge => //.
+              apply ler_normlW => //.
+
+              assert (0 < a' + b'). lra.
+
+
+
+
+              apply lerD.
+
+
+              rewrite -lnM.
+              rewrite ln_pow_id.
+              Search ln.
+              Search (ln (_ + _)).
+              Search "divr".
+              Search ((_ + _) / _ = (_ / _) + _ / _).
+              rewrite ln_div.
+              rewrite ln_div in H1 H3.
+
+              rewrite
               give_up.
+              lra.
             }
           }
           {
