@@ -32,7 +32,6 @@ Section RelPrec.
            rewrite expR_eq0.
            rewrite ln_e.
            rewrite mulr1.
-           Search sequences.expR.
            rewrite lnK => //.
            apply NonZeroSameSignDivPos => //.
          }
@@ -226,43 +225,167 @@ Section RPAddSub.
 
   Hypothesis Halpha : 0 <= α.
 
-  (** *** Theorem 3.1 *)
-  Theorem RPAdd : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
+  (* helper lemmas *)
+  Lemma e_exp_ge: forall (a b : R), a <= b -> 0 <= b -> (e `^ a) <= (e `^ b).
+  Proof. Admitted.
+  Lemma e_exp_ge1 : forall (p : R), 0 <= p -> 1 <= e `^ p.
+  Proof. move=> p H1. Admitted.
+
+  Lemma e_exp_bigger: forall (x y: R), 0 <= x -> 0 <= y -> x <= x * e `^ y.
+  Proof. move=> x y H1 H2.
+         apply ler_peMr => //.
+         apply e_exp_ge1 => //.
+  Qed.
+
+  Lemma div_mul_id: (forall (x y : R), x != 0 -> ( y / x ) * x = y).
+  Proof. move=>x y H1. rewrite -mulrA. field. auto. Qed.
+  Lemma div_mul: (forall (x : R), x != 0 -> ( 1 / x ) * x = x / x).
+  Proof. move=> x H1. rewrite div_mul_id => //. rewrite mulfV => //. Qed.
+
+  (** *** Theorem 3.1 (helper theorem; no reasoning by symmetry applied yet) *)
+  Theorem RPAddCore : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
+                                          0 < a -> 0 < b -> (a' + b' <= a + b) ->
                   a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b * (e `^ β)) / (a' + b') )).
-  Proof. rewrite /RelPrec. move=> [H1 [H2 H3]] [H4 [H5 H6]].
-         suff a'_le_a: a' <= a.
-         suff b'_le_b: a' <= a.
-         suff sym_arg: 1 <= (a + b) / (a' + b').
-         suff sign_ass: 0 < a /\ 0 < b /\ 0 < a' /\ 0 < b'.
-         split; try split.
-         {
-           give_up.
-         }
-         {
-           rewrite /NonZeroSameSign. lra.
-         }
-         {
-           rewrite ger0_norm => // .
-           (* Search sequences.expR. *)
-           (* Search (_`^_ <=  _). *)
-           (* rewrite expRK. *)
+  Proof. move=> A1 A2 a_gt0 b_gt0 a_b_gt_a'_b'.
+         have B1: (RelPrecAlt a a' α). apply RelPrecAltEquiv => //.
+         have B2: (RelPrecAlt b b' β). apply RelPrecAltEquiv => //.
+         rewrite RelPrecAltEquiv. unfold RelPrecAlt in *. unfold RelPrec in *. unfold NonZeroSameSign in *.
+         case B1 => P1 [u1 [P2 P2']]. case B2 => P3 [u2 [P4 P4']].
 
+         suff a_eq: a = e `^ u1 * a'.
+         suff b_eq: b = e `^ u2 * b'.
+         have a_b_ge0: 0 < a + b. lra.
+         have a'_b'_ge0: 0 < a' + b'. lra.
+         have a_p_b_ne0: a + b != 0. lra.
+         have a'_p_b'_ne0: a' + b' != 0. lra.
+         suff b_exp_ge_b: b <= b * e `^ β.
+         split.
+         {
+           apply ln_ge0.
+           rewrite -(@ler_pMl R ((a' * e `^ α + b * e `^ β) / (a' + b')) (a' + b') a'_b'_ge0). (* multiply both sides of the <= ineq *)
+           rewrite -div1r.
+           assert ((a' * e `^ α + b * e `^ β) * (1 / (a' + b')) * (a' + b') = (a' * e `^ α + b * e `^ β) * ((1 / (a' + b')) * (a' + b'))) by lra.
+           rewrite H. clear H.
+           rewrite div_mul_id; try lra. rewrite mulr1.
+           apply lerD.
+           apply e_exp_bigger => //. lra.
+           rewrite b_eq.
+           rewrite mulrC. rewrite mulrA.
+           rewrite -powRD.
+           rewrite mulrC.
 
-           rewrite !ln_div. rewrite ln_div in H3. rewrite ln_div in H6.
-           have a_ineq: a <= a' * e `^ α.
-           rewrite lnM.
-           Search ln.
-           rewrite -ln_powR.
-           apply lerB.
+           apply e_exp_bigger => //. lra.
+           suff u2_lhs: -u2 <= β.
 
            lra.
-           rewrite ln_ge0 => //.
+           assert (- u2 <= `|u2|).
+           rewrite -normrN.
+           rewrite ler_norm => //.
+           lra.
+           Search implb.
+           assert (@e R != 0 = true).
+           assert (0 <@e R). apply expR_gt0.
+           lra.
+           rewrite H.
+           apply implybT.
          }
-         give_up.
+         {
+           exists (ln (R := R) ((a + b) / (a' + b'))).
 
-         give_up.
-    rewrite RPProp3.
-    Admitted.
+           split.
+           unfold powR.
+           rewrite ln_e.
+           assert ((@e R == 0) = false). apply expR_eq0. rewrite H.
+           rewrite mulr1.
+           rewrite lnK => //.
+           apply divr_gt0 => //.
+
+           rewrite ger0_norm.
+           rewrite !ln_div.
+           rewrite a_eq.
+           rewrite b_eq.
+           apply lerB.
+
+           suff lhs0_rewrite: (0 <= ln (R:=R) (a' * e `^ α + e `^ u2 * b' * e `^ β) - ln (R:=R) (e `^ u1 * a' + e `^ u2 * b')).
+           have lhs1_rewrite: (0 + ln (R:=R) (e `^ u1 * a' + e `^ u2 * b') = ln (R:=R) (e `^ u1 * a' + e `^ u2 * b')) by lra.
+           rewrite -lhs1_rewrite.
+
+           rewrite (lerBrDr 0 (ln (R:=R) (a' * e `^ α + e `^ u2 * b' * e `^ β)) (ln (R:=R) (e `^ u1 * a' + e `^ u2 * b'))) in lhs0_rewrite.
+           apply lhs0_rewrite.
+           rewrite -ln_div.
+           rewrite -a_eq -b_eq.
+
+           apply ln_ge0.
+           (* suff bounds_good: a + b <= (a' * e `^ α + b * e `^ β). *)
+           rewrite -(@ler_pMl R ((a' * e `^ α + b * e `^ β) / (a + b)) (a + b) a_b_ge0). (* multiply both sides of the <= ineq *)
+           rewrite -div1r.
+           assert ((1 / (a + b)) * (a + b) = ((a + b) / (a + b))) by lra.
+           rewrite -mulrA.
+           rewrite div_mul_id.
+           rewrite mulr1.
+           rewrite a_eq b_eq.
+           apply lerD.
+           {
+             rewrite -P2.
+             rewrite -div1r. rewrite -mulrA.
+             assert (( 1 / a' ) * a' = a' / a') by lra.
+             rewrite H0.
+             rewrite mulfV => //; try lra. rewrite mulr1.
+             rewrite -(@ler_pdivrMl _  a' (e `^ α) a); try lra.
+             have a_inv: (a'^-1 * a = a / a') by lra.
+             rewrite a_inv P2.
+             apply e_exp_ge.
+             apply ler_normlW => //.  auto.
+           }
+           {
+             rewrite -P4.
+             rewrite -div1r. rewrite -mulrA.
+             rewrite div_mul_id; try rewrite mulr1; try lra.
+           }
+           lra.
+           {
+            suff gt0: (0 < a' * e `^ α + e `^ u2 * b' * e `^ β).
+            apply gt0.
+            rewrite -(addr0 0).
+            apply ltrD; rewrite pmulr_lgt0 => //; try apply powR_gt0; try apply expR_gt0; try lra.
+           }
+           {
+            suff gt0: (0 < e `^ u1 * a' + e `^ u2 * b').
+            apply gt0.
+            rewrite -(addr0 0).
+            apply ltrD; rewrite pmulr_lgt0 => //; try apply powR_gt0; try apply expR_gt0; try lra.
+           }
+           lra.
+           {
+            suff gt0: (0 < a' * e `^ α + b * e `^ β).
+            apply gt0.
+            rewrite -(addr0 0).
+            apply ltrD; rewrite pmulr_lgt0 => //; try apply powR_gt0; try apply expR_gt0; try lra.
+           }
+           auto.
+           auto.
+           auto.
+           apply ln_ge0.
+           rewrite -(@ler_pMl R ((a + b) / (a' + b')) (a' + b')). (* multiply both sides of the <= ineq *)
+           rewrite div_mul_id.
+           lra.
+           lra.
+           lra.
+         }
+         apply e_exp_bigger => //.
+         lra.
+         rewrite -P4.
+         rewrite div_mul_id => //.
+         lra.
+         rewrite -P2.
+         rewrite div_mul_id => //.
+         lra.
+    Qed.
+
+  (** *** Theorem 3.1 (full theorem with reasoning by symmetry) *)
+  Theorem RPAdd : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
+                  a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b * (e `^ β)) / (a' + b') )).
+  Proof. Admitted.
 
   (** *** Theorem 3.2 *)
   Theorem RPSub : a ~ a' ; rp(α) -> b ~ b' ; rp(β) -> `|a'| * (e `^ -α) > `|b'| * (e `^ β) ->
