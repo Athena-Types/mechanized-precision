@@ -233,7 +233,8 @@ Section RPAddSub.
 
   Lemma e_exp_ge1 : forall (p : R), 0 <= p -> 1 <= e `^ p.
 
-  Proof. move=> p H1. Admitted.
+  Proof. move=> p H1. rewrite -ler_ln;[rewrite ln1 ln_powR ln_e; nra | |].
+  all: rewrite posrE; try nra; apply powR_gt0, expR_gt0. Qed.
 
   Lemma e_exp_bigger: forall (x y: R), 0 <= x -> 0 <= y -> x <= x * e `^ y.
   Proof. move=> x y H1 H2.
