@@ -1,6 +1,6 @@
 From ErrorMetrics Require Import error_model relative_prec.
 From Flocq Require Import Core.
-From Coq Require Import Reals Psatz.
+From Coq Require Import Reals Psatz List.
 
 From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import Rstruct sequences exp.
@@ -39,17 +39,58 @@ Notation u := (bpow beta (-prec + 1)).
 
 Theorem relative_prec_plus: 
   forall x y : R, format x -> format y -> x + y <> 0 ->  
-  exists eps, 
-  Rabs eps <= u / (1-u) /\ ((round beta fexp rnd (x + y)) ~ (x + y); rp(eps)).
+  ((round beta fexp rnd (x + y)) ~ (x + y); rp(u/(1-u))).
 Proof.
 move => x y Hx Hy H0.
 destruct (exp_error_model beta _ Hprec rnd Hrnd Hprec2 (x + y)) as (eps, (H1, H2)) => //.
-exists (Rabs eps); split. 
-rewrite Rabs_Rabsolu => //. rewrite H2 /RelPrec; repeat split.
-apply /RleP; apply Rabs_pos. apply NZSS_mul_exp => //.
+rewrite H2 /RelPrec; repeat split.
+apply /RleP. apply Rle_trans with (Rabs eps) => //. apply Rabs_pos.
+apply NZSS_mul_exp => //.
 rewrite -!RmultE -!RinvE Rmult_inv_r_id_m => //.
-rewrite exp.expRK => //=.
+rewrite exp.expRK => //=. apply /RleP => //.
 Qed.
 
-End RPOps.
+Definition sumF  := fun x y => round beta fexp rnd (x + y).
+Definition multF := fun x y => round beta fexp rnd (x * y).
 
+Definition dot_prod (sum mult: R -> R -> R) (x y: list R) : R:= 
+  fold_right (fun x s => sum (mult (fst x) (snd x)) s) 0 (combine x y). 
+
+Definition dot_prodF := dot_prod sumF multF.
+Definition dot_prodR := dot_prod Rplus Rmult.
+
+Lemma dotprodR_plus : 
+ forall a x, 
+ fold_right (fun x s => Rplus (Rmult (fst x) (snd x)) s) 0 (a :: x)
+ = fst a * snd a + fold_right (fun x s => Rplus (Rmult (fst x) (snd x)) s) 0 x.
+Proof. trivial. Qed.
+
+Lemma dotprodF_plus : 
+ forall a x, fold_right (fun x s => sumF (multF (fst x) (snd x)) s) 0 (a :: x) = 
+ sumF (multF (fst a) (snd a)) 
+   (fold_right (fun x s => sumF (multF (fst x) (snd x)) s) 0 x).
+Proof. trivial. Qed.
+
+Theorem dot_product: 
+  forall x y : list R, 
+    let n:= length (combine x y) in 
+    (dot_prodF x y ~ dot_prodR x y ; rp(INR n * (u/(1-u)) )).
+Proof.
+move => x y.
+rewrite /dot_prodF /dot_prodR /dot_prod.
+induction (combine x y).
+{ simpl. admit. }
+rewrite dotprodR_plus dotprodF_plus. 
+replace (INR (length ( _ :: _))) with (1 + INR (length l)).
+rewrite Rmult_plus_distr_r Rmult_1_l.
+set dpF := fold_right _.
+set A := sumF (multF a.1 a.2) _.
+set C := a.1 * _ + _.
+set B := Rplus (multF a.1 a.2) (dpF 0 l).
+pose proof (RPProp6 A B (u / (1-u)) C (INR (length l) * (u / (1-u)))).
+apply H; clear H.
+rewrite /A /sumF /B.
+apply relative_prec_plus. admit. admit. admit.
+Admitted.
+
+End RPOps.
