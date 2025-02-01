@@ -23,6 +23,13 @@ Qed.
 
 End Lemmas.
 
+Section ExtendedRP.
+
+Definition RelPrecEx (x y a : R) : Prop := 
+   (x == 0) /\ (y == 0) /\ (a == 0) \/ (x ~ y ; rp(a)).
+
+Notation "a ~ a' ; rpe( c )" := (RelPrecEx a a' c) (at level 99).
+
 Section RPOps.
 
 Variable beta : radix.
@@ -37,7 +44,7 @@ Notation fexp := (FLX_exp prec).
 Notation format := (generic_format beta fexp).
 Notation u := (bpow beta (-prec + 1)).
 
-Theorem relative_prec_plus: 
+Theorem relative_prec_plus:  
   forall x y : R, format x -> format y -> x + y <> 0 ->  
   ((round beta fexp rnd (x + y)) ~ (x + y); rp(u/(1-u))).
 Proof.
@@ -74,12 +81,12 @@ Proof. trivial. Qed.
 Theorem dot_product: 
   forall x y : list R, 
     let n:= length (combine x y) in 
-    (dot_prodF x y ~ dot_prodR x y ; rp(INR n * (u/(1-u)) )).
+    (dot_prodF x y ~ dot_prodR x y ; rpe(INR n * (u/(1-u)) )).
 Proof.
 move => x y.
 rewrite /dot_prodF /dot_prodR /dot_prod.
-induction (combine x y).
-{ simpl. admit. }
+induction (combine x y); [left|right].
+{ simpl. rewrite Rmult_0_l /RelPrecEx; repeat split; try apply /eqP; try nra.  }
 rewrite dotprodR_plus dotprodF_plus. 
 replace (INR (length ( _ :: _))) with (1 + INR (length l)).
 rewrite Rmult_plus_distr_r Rmult_1_l.
