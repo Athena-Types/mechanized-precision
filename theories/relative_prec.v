@@ -221,9 +221,10 @@ End RPElementaryProperties.
 (** ** Section 3.3. Addition and subtraction. *)
 Section RPAddSub.
   Context {R : realType}.
-  Variables (a a' b b' α β : R).
+  Variables (α β : R).
 
   Hypothesis Halpha : 0 <= α.
+  Hypothesis Hbeta : 0 <= β.
 
   (* helper lemmas *)
   Lemma e_exp_ge: forall (a b : R), a <= b -> 0 <= b -> (e `^ a) <= (e `^ b).
@@ -243,7 +244,7 @@ Section RPAddSub.
   Proof. move=> x H1. rewrite div_mul_id => //. rewrite mulfV => //. Qed.
 
   (** *** Theorem 3.1 (helper theorem; no reasoning by symmetry applied yet) *)
-  Theorem RPAddCore : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
+  Theorem RPAddCore (a a' b b' : R) : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
                                           0 < a -> 0 < b -> (a' + b' <= a + b) ->
                   a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b * (e `^ β)) / (a' + b') )).
   Proof. move=> A1 A2 a_gt0 b_gt0 a_b_gt_a'_b'.
@@ -383,9 +384,39 @@ Section RPAddSub.
     Qed.
 
   (** *** Theorem 3.1 (full theorem with reasoning by symmetry) *)
-  Theorem RPAdd : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
+  Theorem RPAdd (a a' b b' : R) : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
                   a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b * (e `^ β)) / (a' + b') )).
-  Proof. Admitted.
+  Proof. move=> A1 B1.
+         case: (@real_ltP _ 0 a _ _) => //= a_ltP.
+         {
+          case: (@real_ltP _ 0 b _ _) => //= b_ltP.
+          {
+            case: (@real_leP _ (a' + b') (a + b)) => //= ab_ltP.
+            {
+              apply RPAddCore => //.
+            }
+            {
+              apply RPProp1.
+              apply RPProp1 in A1. apply RPProp1 in B1.
+              Check RPAddCore.
+              have ab_leP: (a + b <= a' + b') by lra.
+              unfold RelPrec in A1.
+              unfold RelPrec in B1.
+              unfold NonZeroSameSign in *.
+              have a'_lt0: (0 < a') by lra.
+              have b'_lt0: (0 < b') by lra.
+              pose proof (@RPAddCore a' a b' b A1 B1 a'_lt0 b'_lt0 ab_leP) as rp_sym.
+              give_up.
+            }
+          }
+          {
+            give_up.
+          }
+         }
+         {
+           give_up.
+         }
+  Admitted.
 
   (** *** Theorem 3.2 *)
   Theorem RPSub : a ~ a' ; rp(α) -> b ~ b' ; rp(β) -> `|a'| * (e `^ -α) > `|b'| * (e `^ β) ->
