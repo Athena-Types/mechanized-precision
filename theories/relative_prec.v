@@ -340,7 +340,7 @@ Section RPAddSub.
              have a_inv: (a'^-1 * a = a / a') by lra.
              rewrite a_inv P2.
              apply e_exp_ge.
-             apply ler_normlW => //.  auto.
+             apply ler_normlW => //.
            }
            {
              rewrite -P4.
@@ -423,7 +423,7 @@ Section RPAddSub.
   Admitted.
 
   (** *** Theorem 3.2 *)
-  Theorem RPSub : a ~ a' ; rp(α) -> b ~ b' ; rp(β) -> `|a'| * (e `^ -α) > `|b'| * (e `^ β) ->
+  Theorem RPSub (a a' b b' : R) : a ~ a' ; rp(α) -> b ~ b' ; rp(β) -> `|a'| * (e `^ -α) > `|b'| * (e `^ β) ->
                   a + b ~ a' + b'; rp(ln(a' * (e `^ α) -  b * (e `^ -β) / (a' - b') )).
     Admitted.
 
