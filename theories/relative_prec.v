@@ -15,6 +15,12 @@ Section RelPrec.
     rewrite expRK => //.
   Qed.
 
+  Lemma e_gt0: 0 < e.
+  Proof.
+    unfold e.
+    rewrite expR_gt0 => //.
+  Qed.
+
   Lemma ln_pow_id : forall u, ln (R:=R) (e `^ u) = u.
   Proof. move=> u. unfold powR.
          rewrite expR_eq0. rewrite (@expRK R) ln_e mulr1 => //.
@@ -257,15 +263,117 @@ Section RPAddSub.
          apply e_exp_ge1 => //.
   Qed.
 
-
   Lemma div_mul_id: (forall (x y : R), x != 0 -> ( y / x ) * x = y).
   Proof. move=>x y H1. rewrite -mulrA. field. auto. Qed.
   Lemma div_mul: (forall (x : R), x != 0 -> ( 1 / x ) * x = x / x).
   Proof. move=> x H1. rewrite div_mul_id => //. rewrite mulfV => //. Qed.
+  Lemma div_mul_y: (forall (x y : R), x != 0 -> ( x * (y / x) ) = y).
+  Proof. move=> x y H1. rewrite mulrC. rewrite div_mul_id => //.
+         Qed.
+
+  Lemma e_ne0: (@e R == 0) = false.
+  Proof. rewrite expR_eq0. reflexivity. Qed.
+
+  Ltac simp :=
+    let H1 := fresh in
+    let H2 := fresh in
+    match goal with
+      | [ |- context[?X \is Num.pos] ] => suff H1: (0 < X); apply H1
+      | [ |- context[e `^ ?X != 0] ] => assert (0 < @e R `^ X) as H1 by (apply powR_gt0; apply e_gt0); lra; clear H1
+      | [ |- context[@e R == 0] ] => rewrite e_ne0
+      | [ |- context[sequences.expR (ln (R:=R) _ )] ] => rewrite lnK
+      | [ |- context[(ln (R:=R) (sequences.expR _) )] ] => rewrite expRK
+    end.
+
+  Ltac destroy' :=
+    let H1 := fresh in
+    let H2 := fresh in
+    match goal with
+      | [ |- context[0 < ?X * ?Y] ] => suff H1: (0 < X); suff H2: (0 < Y); lra
+      | [ |- context[?B <= ?B * (e `^ ?Y)]] => rewrite e_exp_bigger; try lra
+      (* | [ |- context[- ?X <= - ?Y]] => have H1: 0 - Y = - Y by lra; have H2: 0 - X = - X by lra; rewrite H1 H2; apply lerB; try auto *)
+    end.
+
+  Ltac destroy := try repeat progress simp; try repeat destroy'; try repeat apply addr_gt0 => //; try repeat apply mulr_gt0 => //; try apply powR_gt0; try apply e_gt0; try lra.
 
   (** *** Theorem 3.1 (helper theorem; no reasoning by symmetry applied yet) *)
   Theorem RPAddCore (a a' b b' : R) : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
-                                          0 < a -> 0 < b -> (a' + b' <= a + b) ->
+                                          0 < a -> 0 < b -> (a' + b') <= (a + b) ->
+                  a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b' * (e `^ β)) / (a' + b') )).
+  Proof. move=> A1 A2 a_gt0 b_gt0 a'b'_lt_ab.
+         have B1: (RelPrecAlt a a' α). apply RelPrecAltEquiv => //.
+         have B2: (RelPrecAlt b b' β). apply RelPrecAltEquiv => //.
+         rewrite RelPrecAltEquiv. unfold RelPrecAlt in *. unfold RelPrec in *. unfold NonZeroSameSign in *.
+         case B1 => P1 [u1 [P2 P2']]. case B2 => P3 [u2 [P4 P4']].
+
+         suff a_eq: a = e `^ u1 * a'.
+         suff b_eq: b = e `^ u2 * b'.
+         have a_b_ge0: 0 < a + b. lra.
+         have a'_b'_ge0: 0 < a' + b'. lra.
+         have a_p_b_ne0: a + b != 0. lra.
+         have a'_p_b'_ne0: a' + b' != 0. lra.
+         suff b_exp_ge_b: b <= b * e `^ β.
+         split.
+         {
+           apply ln_ge0.
+           rewrite -(@ler_pMl R ((a' * e `^ α + b' * e `^ β) / (a' + b')) (a' + b') a'_b'_ge0). (* multiply both sides of the <= ineq *)
+           rewrite -div1r.
+           rewrite mulrA.
+           rewrite div_mul_id.
+           rewrite mulr1.
+           apply lerD; destroy.
+           destroy.
+         }
+         {
+           exists (ln (R := R) ((a + b) / (a' + b'))).
+           split.
+           unfold powR.
+           rewrite ln_e. rewrite mulr1.
+           destroy.
+           rewrite invr_gt0.
+           lra.
+
+           rewrite ger0_norm.
+           rewrite !ln_div.
+           apply lerB.
+           rewrite ler_ln.
+           apply lerD.
+           all: try destroy.
+
+           rewrite a_eq. rewrite mulrC.
+           rewrite -subr_ge0.
+           rewrite -GRing.mulrBr.
+           rewrite mulr_ge0; try lra.
+           rewrite subr_ge0.
+           rewrite e_exp_ge => //.
+           apply ler_normlW => //.
+
+           rewrite b_eq. rewrite mulrC.
+           rewrite -subr_ge0.
+           rewrite -GRing.mulrBr.
+           rewrite mulr_ge0; try lra.
+           rewrite subr_ge0.
+           rewrite e_exp_ge => //.
+           apply ler_normlW => //.
+
+           rewrite ln_div.
+           rewrite subr_ge0.
+           rewrite ler_ln.
+           all: destroy.
+         }
+         apply e_exp_bigger; lra.
+         rewrite -P4 div_mul_id; lra.
+         rewrite -P2 div_mul_id; lra.
+    Qed.
+
+  Lemma ln_sym_neg : (forall (a b : R), ln (R:=R) (a / b) = - ln (R:=R) (b / a)).
+  Proof. Admitted.
+
+  Lemma ln_norm_sym : (forall (a b : R), (`|ln (R:=R) (a / b)| = `|ln (R:=R) (b / a)|)).
+  Proof. Admitted.
+
+
+  Lemma neg_le_norm : (forall (x : R), - x <= `|x|). Proof. Admitted.
                   a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b * (e `^ β)) / (a' + b') )).
   Proof. move=> A1 A2 a_gt0 b_gt0 a_b_gt_a'_b'.
          have B1: (RelPrecAlt a a' α). apply RelPrecAltEquiv => //.
