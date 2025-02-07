@@ -283,6 +283,7 @@ Section RPAddSub.
       | [ |- context[@e R == 0] ] => rewrite e_ne0
       | [ |- context[sequences.expR (ln (R:=R) _ )] ] => rewrite lnK
       | [ |- context[(ln (R:=R) (sequences.expR _) )] ] => rewrite expRK
+      (* | [ |- context[?X^-1] ] => rewrite -(@div1r _ X) *)
     end.
 
   Ltac destroy' :=
@@ -296,11 +297,30 @@ Section RPAddSub.
 
   Ltac destroy := try repeat progress simp; try repeat destroy'; try repeat apply addr_gt0 => //; try repeat apply mulr_gt0 => //; try apply powR_gt0; try apply e_gt0; try lra.
 
-  (** *** Theorem 3.1 (helper theorem; no reasoning by symmetry applied yet) *)
+  (* Lemma ln_sym_neg : (forall (a b : R), ln (R:=R) (a / b) = - ln (R:=R) (b / a)). *)
+  (* Proof. Admitted. *)
+
+  Lemma ln_norm_sym : (forall (a b : R), (`|ln (R:=R) (a / b)| = `|ln (R:=R) (b / a)|)).
+  Proof. Admitted.
+
+  Lemma e_del_ge2: forall del, 2%R <= @GRing.add R (e `^ del) (e `^ (-del)).
+  Proof.
+    move=> del.
+    unfold powR.
+    simp.
+    unfold sequences.expR.
+    rewrite -sequences.lim_seriesD.
+    rewrite !ln_e !mulr1.
+    Search (sequences.exp_coeff).
+    Search (sequences.series (_ + _)).
+    Search (sequences.exp_coeff).
+    Admitted.
+
+  (** *** Theorem 3.1 (core helper theorem) *)
   Theorem RPAddCore (a a' b b' : R) : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
-                                          0 < a -> 0 < b -> (a' + b') <= (a + b) ->
+                                          0 < a -> 0 < b ->
                   a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b' * (e `^ β)) / (a' + b') )).
-  Proof. move=> A1 A2 a_gt0 b_gt0 a'b'_lt_ab.
+  Proof. move=> A1 A2 a_gt0 b_gt0.
          have B1: (RelPrecAlt a a' α). apply RelPrecAltEquiv => //.
          have B2: (RelPrecAlt b b' β). apply RelPrecAltEquiv => //.
          rewrite RelPrecAltEquiv. unfold RelPrecAlt in *. unfold RelPrec in *. unfold NonZeroSameSign in *.
@@ -333,299 +353,111 @@ Section RPAddSub.
            rewrite invr_gt0.
            lra.
 
-           rewrite ger0_norm.
-           rewrite !ln_div.
-           apply lerB.
-           rewrite ler_ln.
-           apply lerD.
-           all: try destroy.
+           case: (@real_leP _ (a' + b') (a + b) _ _) => //= ab_leP.
+           {
+             rewrite ger0_norm.
+             rewrite !ln_div.
+             apply lerB.
+             rewrite ler_ln.
+             apply lerD.
+             all: try destroy.
 
-           rewrite a_eq. rewrite mulrC.
-           rewrite -subr_ge0.
-           rewrite -GRing.mulrBr.
-           rewrite mulr_ge0; try lra.
-           rewrite subr_ge0.
-           rewrite e_exp_ge => //.
-           apply ler_normlW => //.
+             rewrite a_eq. rewrite mulrC.
+             rewrite -subr_ge0.
+             rewrite -GRing.mulrBr.
+             rewrite mulr_ge0; try lra.
+             rewrite subr_ge0.
+             rewrite e_exp_ge => //.
+             apply ler_normlW => //.
 
-           rewrite b_eq. rewrite mulrC.
-           rewrite -subr_ge0.
-           rewrite -GRing.mulrBr.
-           rewrite mulr_ge0; try lra.
-           rewrite subr_ge0.
-           rewrite e_exp_ge => //.
-           apply ler_normlW => //.
+             rewrite b_eq. rewrite mulrC.
+             rewrite -subr_ge0.
+             rewrite -GRing.mulrBr.
+             rewrite mulr_ge0; try lra.
+             rewrite subr_ge0.
+             rewrite e_exp_ge => //.
+             apply ler_normlW => //.
 
-           rewrite ln_div.
-           rewrite subr_ge0.
-           rewrite ler_ln.
-           all: destroy.
+             rewrite ln_div.
+             rewrite subr_ge0.
+             rewrite ler_ln.
+             all: destroy.
+          }
+          {
+             rewrite ler_norml in P4'.
+             rewrite ler_norml in P2'.
+
+             rewrite ln_norm_sym.
+             rewrite ger0_norm.
+             rewrite a_eq b_eq.
+             rewrite ler_ln.
+             rewrite lter_pdivlMr.
+             rewrite mulrC.
+             rewrite mulrA.
+             rewrite lter_pdivrMr.
+             rewrite !mulrDr !mulrDl.
+             rewrite !mulrA !addrA.
+
+             assert (a' * e `^ α * e `^ u1 * a' + b' * e `^ β * e `^ u1 * a' + a' * e `^ α * e `^ u2 * b' + b' * e `^ β * e `^ u2 * b'
+                     =
+                     a' * e `^ α * e `^ u1 * a' + a' * b' * (e `^ α * e `^ u2 + e `^ β * e `^ u1) + b' * e `^ β * e `^ u2 * b')
+               by lra.
+             rewrite H. clear H.
+
+             assert (a' * a' + b' * a' + a' * b' + b' * b' = a' * a' + a' * b' * 2 + b' * b') by lra.
+             rewrite H. clear H.
+
+             repeat apply lerD.
+             apply ler_pM => //; try lra.
+             rewrite -mulrA.
+             apply ler_peMr => //; try lra.
+             rewrite -powRD.
+             apply e_exp_ge1.
+             lra.
+             destroy.
+
+             apply ler_pM => //; try lra.
+             apply mulr_ge0; try lra.
+             remember (β - α) as del.
+             assert (β = α + del) by lra.
+             rewrite H. clear H.
+             assert ((e `^ (-del)) + (e `^ (del)) <= e `^ (α + u2) + e `^ (α + del + u1)).
+             apply lerD; apply e_exp_ge; lra.
+             have tmp: (2 <= (e `^ (-del)) + (e `^ (del))).
+             rewrite addrC. apply e_del_ge2.
+             rewrite -!powRD.
+             all: try destroy.
+
+             repeat apply lerD.
+             apply ler_pM => //; try lra.
+             rewrite -mulrA.
+             apply ler_peMr => //; try lra.
+             rewrite -powRD.
+             apply e_exp_ge1.
+             lra.
+             destroy.
+
+             rewrite invr_gt0.
+             lra.
+             apply addr_gt0;
+             rewrite pmulr_rgt0;
+             try apply powR_gt0;
+             try apply e_gt0; try lra.
+
+             rewrite invr_gt0.
+             lra.
+
+             apply ln_ge0.
+             rewrite ler_pdivlMr.
+             rewrite mul1r.
+             lra.
+             lra.
+          }
          }
          apply e_exp_bigger; lra.
          rewrite -P4 div_mul_id; lra.
          rewrite -P2 div_mul_id; lra.
-    Qed.
-
-  Lemma ln_sym_neg : (forall (a b : R), ln (R:=R) (a / b) = - ln (R:=R) (b / a)).
-  Proof. Admitted.
-
-  Lemma ln_norm_sym : (forall (a b : R), (`|ln (R:=R) (a / b)| = `|ln (R:=R) (b / a)|)).
-  Proof. Admitted.
-
-
-  Lemma neg_le_norm : (forall (x : R), - x <= `|x|). Proof. Admitted.
-                  a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b * (e `^ β)) / (a' + b') )).
-  Proof. move=> A1 A2 a_gt0 b_gt0 a_b_gt_a'_b'.
-         have B1: (RelPrecAlt a a' α). apply RelPrecAltEquiv => //.
-         have B2: (RelPrecAlt b b' β). apply RelPrecAltEquiv => //.
-         rewrite RelPrecAltEquiv. unfold RelPrecAlt in *. unfold RelPrec in *. unfold NonZeroSameSign in *.
-         case B1 => P1 [u1 [P2 P2']]. case B2 => P3 [u2 [P4 P4']].
-
-         suff a_eq: a = e `^ u1 * a'.
-         suff b_eq: b = e `^ u2 * b'.
-         have a_b_ge0: 0 < a + b. lra.
-         have a'_b'_ge0: 0 < a' + b'. lra.
-         have a_p_b_ne0: a + b != 0. lra.
-         have a'_p_b'_ne0: a' + b' != 0. lra.
-         suff b_exp_ge_b: b <= b * e `^ β.
-         split.
-         {
-           apply ln_ge0.
-           rewrite -(@ler_pMl R ((a' * e `^ α + b * e `^ β) / (a' + b')) (a' + b') a'_b'_ge0). (* multiply both sides of the <= ineq *)
-           rewrite -div1r.
-           assert ((a' * e `^ α + b * e `^ β) * (1 / (a' + b')) * (a' + b') = (a' * e `^ α + b * e `^ β) * ((1 / (a' + b')) * (a' + b'))) by lra.
-           rewrite H. clear H.
-           rewrite div_mul_id; try lra. rewrite mulr1.
-           apply lerD.
-           apply e_exp_bigger => //. lra.
-           rewrite b_eq.
-           rewrite mulrC. rewrite mulrA.
-           rewrite -powRD.
-           rewrite mulrC.
-
-           apply e_exp_bigger => //. lra.
-           suff u2_lhs: -u2 <= β.
-
-           lra.
-           assert (- u2 <= `|u2|).
-           rewrite -normrN.
-           rewrite ler_norm => //.
-           lra.
-           assert (@e R != 0 = true).
-           assert (0 <@e R). apply expR_gt0.
-           lra.
-           rewrite H.
-           apply implybT.
-         }
-         {
-           exists (ln (R := R) ((a + b) / (a' + b'))).
-
-           split.
-           unfold powR.
-           rewrite ln_e.
-           assert ((@e R == 0) = false). apply expR_eq0. rewrite H.
-           rewrite mulr1.
-           rewrite lnK => //.
-           apply divr_gt0 => //.
-
-           rewrite ger0_norm.
-           rewrite !ln_div.
-           rewrite a_eq.
-           rewrite b_eq.
-           apply lerB.
-
-           suff lhs0_rewrite: (0 <= ln (R:=R) (a' * e `^ α + e `^ u2 * b' * e `^ β) - ln (R:=R) (e `^ u1 * a' + e `^ u2 * b')).
-           have lhs1_rewrite: (0 + ln (R:=R) (e `^ u1 * a' + e `^ u2 * b') = ln (R:=R) (e `^ u1 * a' + e `^ u2 * b')) by lra.
-           rewrite -lhs1_rewrite.
-
-           rewrite (lerBrDr 0 (ln (R:=R) (a' * e `^ α + e `^ u2 * b' * e `^ β)) (ln (R:=R) (e `^ u1 * a' + e `^ u2 * b'))) in lhs0_rewrite.
-           apply lhs0_rewrite.
-           rewrite -ln_div.
-           rewrite -a_eq -b_eq.
-
-           apply ln_ge0.
-           (* suff bounds_good: a + b <= (a' * e `^ α + b * e `^ β). *)
-           rewrite -(@ler_pMl R ((a' * e `^ α + b * e `^ β) / (a + b)) (a + b) a_b_ge0). (* multiply both sides of the <= ineq *)
-           rewrite -div1r.
-           assert ((1 / (a + b)) * (a + b) = ((a + b) / (a + b))) by lra.
-           rewrite -mulrA.
-           rewrite div_mul_id.
-           rewrite mulr1.
-           rewrite a_eq b_eq.
-           apply lerD.
-           {
-             rewrite -P2.
-             rewrite -div1r. rewrite -mulrA.
-             assert (( 1 / a' ) * a' = a' / a') by lra.
-             rewrite H0.
-             rewrite mulfV => //; try lra. rewrite mulr1.
-             rewrite -(@ler_pdivrMl _  a' (e `^ α) a); try lra.
-             have a_inv: (a'^-1 * a = a / a') by lra.
-             rewrite a_inv P2.
-             apply e_exp_ge.
-             apply ler_normlW => //.
-           }
-           {
-             rewrite -P4.
-             rewrite -div1r. rewrite -mulrA.
-             rewrite div_mul_id; try rewrite mulr1; try lra.
-           }
-           lra.
-           {
-            suff gt0: (0 < a' * e `^ α + e `^ u2 * b' * e `^ β).
-            apply gt0.
-            rewrite -(addr0 0).
-            apply ltrD; rewrite pmulr_lgt0 => //; try apply powR_gt0; try apply expR_gt0; try lra.
-           }
-           {
-            suff gt0: (0 < e `^ u1 * a' + e `^ u2 * b').
-            apply gt0.
-            rewrite -(addr0 0).
-            apply ltrD; rewrite pmulr_lgt0 => //; try apply powR_gt0; try apply expR_gt0; try lra.
-           }
-           lra.
-           {
-            suff gt0: (0 < a' * e `^ α + b * e `^ β).
-            apply gt0.
-            rewrite -(addr0 0).
-            apply ltrD; rewrite pmulr_lgt0 => //; try apply powR_gt0; try apply expR_gt0; try lra.
-           }
-           auto.
-           auto.
-           auto.
-           apply ln_ge0.
-           rewrite -(@ler_pMl R ((a + b) / (a' + b')) (a' + b')). (* multiply both sides of the <= ineq *)
-           rewrite div_mul_id.
-           lra.
-           lra.
-           lra.
-         }
-         apply e_exp_bigger => //.
-         lra.
-         rewrite -P4.
-         rewrite div_mul_id => //.
-         lra.
-         rewrite -P2.
-         rewrite div_mul_id => //.
-         lra.
-    Qed.
-
-  (** *** Theorem 3.1 (full theorem with reasoning by symmetry) *)
-  Theorem RPAdd (a a' b b' : R) : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
-                  a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b * (e `^ β)) / (a' + b') )).
-  Proof. move=> A1 B1.
-         (* suff a'agt0: (0 < a' / a ). *)
-         (* suff b'bgt0: (0 < b' / b ). *)
-         (* have ane0: a != 0. unfold RelPrec in A1. unfold NonZeroSameSign in A1. lra. *)
-         (* have bne0: b != 0. unfold RelPrec in B1. unfold NonZeroSameSign in B1. lra. *)
-         (* have a'ne0: a' != 0. unfold RelPrec in A1. unfold NonZeroSameSign in A1. lra. *)
-         (* have b'ne0: b' != 0. unfold RelPrec in B1. unfold NonZeroSameSign in B1. lra. *)
-         (* suff a_p_bne0: a + b != 0. *)
-         (* suff a'_p_b'ne0: a' + b' != 0. *)
-         case: (@real_ltP _ 0 a _ _) => //= a_ltP.
-         {
-          suff a'gt0: 0 < a'.
-          have age0: 0 <= a by lra.
-          have a'ge0: 0 <= a' by lra.
-          case: (@real_ltP _ 0 b _ _) => //= b_ltP.
-          {
-            suff b'gt0: 0 < b'.
-            have bge0: 0 <= b by lra.
-            have b'ge0: 0 <= b' by lra.
-            case: (@real_leP _ (a' + b') (a + b)) => //= ab_ltP.
-            {
-              apply RPAddCore => //.
-            }
-            {
-              apply RPProp1.
-              apply RPProp1 in A1. apply RPProp1 in B1.
-              have ab_leP: (a + b <= a' + b') by lra.
-              have A1': (RelPrecAlt a' a α). apply RelPrecAltEquiv => //.
-              have B1': (RelPrecAlt b' b β). apply RelPrecAltEquiv => //.
-              unfold RelPrec in A1.
-              unfold RelPrec in B1.
-              unfold NonZeroSameSign in *.
-              pose proof (@RPAddCore a' a b' b A1 B1 a'gt0 b'gt0 ab_leP) as rp_sym.
-              rewrite RelPrecAltEquiv in rp_sym. rewrite RelPrecAltEquiv. unfold RelPrecAlt in *.
-              destruct rp_sym as [H1 [u [H2 H3]]].
-              destruct A1' as [A1' [u1 [A2' A3']]].
-              destruct B1' as [B1' [u2 [B2' B3']]].
-
-              have a_eq: (a' = a * e `^ u1).
-              rewrite -A2'. rewrite mulrC. rewrite div_mul_id => //. lra.
-              have b_eq: (b' = b * e `^ u2).
-              rewrite -B2'. rewrite mulrC. rewrite div_mul_id => //. lra.
-
-              split; try split; try auto.
-              apply ln_ge0.
-              rewrite -(@ler_pMl R ((a' * e `^ α + b * e `^ β) / (a' + b')) (a' + b')).
-              rewrite div_mul_id => //.
-              rewrite lerD => //; try rewrite e_exp_bigger => //.
-
-              rewrite b_eq => //.
-              apply ler_pM => //.
-              apply powR_ge0 => //.
-              apply e_exp_ge => //.
-              apply ler_normlW => //.
-              lra.
-              lra.
-
-              exists u. split; try auto.
-              assert (ln (R := R) ((a' + b') / (a + b)) = ln (R := R) (e `^ u)). f_equal => //.
-              assert (ln (R := R) (a' / a) = ln (R := R) (e `^ u1)). f_equal=> //.
-              assert (ln (R := R) (b' / b) = ln (R := R) (e `^ u2)). f_equal=> //.
-              rewrite ln_pow_id in H.
-              rewrite ln_pow_id in H0.
-              rewrite ln_pow_id in H4.
-              rewrite a_eq b_eq.
-              rewrite -H -H0 -H4.
-              rewrite !pow_ln_id => //.
-              assert ((a * (a' / a)) = (a' * (a / a))). give_up.
-              rewrite H5. rewrite divff. rewrite mulr1.
-              assert ((b * (b' / b)) = (b' * (b / b))). give_up.
-              rewrite H6. rewrite divff. rewrite mulr1.
-              rewrite ger0_norm.
-              rewrite !ln_div.
-              rewrite lerB => //.
-              rewrite ler_ln.
-              rewrite lerD => //.
-              rewrite e_exp_bigger => //.
-              rewrite b_eq.
-              rewrite ler_pM => //.
-              rewrite powR_ge0 => //.
-              rewrite e_exp_ge => //.
-              apply ler_normlW => //.
-
-              assert (0 < a' + b'). lra.
-
-
-
-
-              apply lerD.
-
-
-              rewrite -lnM.
-              rewrite ln_pow_id.
-              Search ln.
-              Search (ln (_ + _)).
-              Search "divr".
-              Search ((_ + _) / _ = (_ / _) + _ / _).
-              rewrite ln_div.
-              rewrite ln_div in H1 H3.
-
-              rewrite
-              give_up.
-              lra.
-            }
-          }
-          {
-            give_up.
-          }
-         }
-         {
-           give_up.
-         }
-  Admitted.
+    Admitted.
 
   (** *** Theorem 3.2 *)
   Theorem RPSub (a a' b b' : R) : a ~ a' ; rp(α) -> b ~ b' ; rp(β) -> `|a'| * (e `^ -α) > `|b'| * (e `^ β) ->
