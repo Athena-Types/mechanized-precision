@@ -457,7 +457,32 @@ Section RPAddSub.
          apply e_exp_bigger; lra.
          rewrite -P4 div_mul_id; lra.
          rewrite -P2 div_mul_id; lra.
-    Admitted.
+    Qed.
+
+  (** *** Theorem 3.1 *)
+  Theorem RPAdd (a a' b b' : R) :
+    NonZeroSameSign a b -> a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
+                  a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b' * (e `^ β)) / (a' + b') )).
+  Proof. move=> NSSS A1 A2.
+         case: NSSS => H1; destruct H1.
+         {
+           apply RPAddCore => //.
+         }
+         {
+           apply (RPProp3 _ _ _ (-1)) in A2; try lra.
+           apply (RPProp3 _ _ _ (-1)) in A1; try lra.
+           have inverted_thm: (-1 * a + -1 * b ~ -1 * a' + -1 * b'; rp( ln (R:=R) ((-1 * a' * e `^ α + -1 * b' * e `^ β) / (-1 * a' + -1 * b')))).
+           apply RPAddCore => //; try lra.
+           rewrite -!mulrDr in inverted_thm.
+           apply (RPProp3 _ _ _ (-1)) in inverted_thm; try lra.
+           rewrite !mulrA in inverted_thm.
+           assert (-1 * -1 * (a + b) = a + b) by lra.
+           assert (-1 * -1 * (a' + b') = a' + b') by lra.
+           assert ((-1 * a' * e `^ α + -1 * b' * e `^ β) / (-1 * (a' + b')) = (a' * e `^ α + b' * e `^ β) / ((a' + b'))) by lra.
+           rewrite H1 H2 H3 in inverted_thm.
+           apply inverted_thm.
+         }
+         Qed.
 
   (** *** Theorem 3.2 *)
   Theorem RPSub (a a' b b' : R) : a ~ a' ; rp(α) -> b ~ b' ; rp(β) -> `|a'| * (e `^ -α) > `|b'| * (e `^ β) ->
