@@ -297,11 +297,19 @@ Section RPAddSub.
 
   Ltac destroy := try repeat progress simp; try repeat destroy'; try repeat apply addr_gt0 => //; try repeat apply mulr_gt0 => //; try apply powR_gt0; try apply e_gt0; try lra.
 
-  (* Lemma ln_sym_neg : (forall (a b : R), ln (R:=R) (a / b) = - ln (R:=R) (b / a)). *)
-  (* Proof. Admitted. *)
-
-  Lemma ln_norm_sym : (forall (a b : R), (`|ln (R:=R) (a / b)| = `|ln (R:=R) (b / a)|)).
-  Proof. Admitted.
+  Lemma ln_norm_sym : (forall (a b : R), NonZeroSameSign a b -> (`|ln (R:=R) (a / b)| = `|ln (R:=R) (b / a)|)).
+  Proof. move=> a b H1.
+         rewrite -invf_div.
+         rewrite -(@powR_inv1 _ (b / a)).
+         rewrite ln_powR.
+         rewrite mulN1r.
+         rewrite normrN.
+         reflexivity.
+         assert (0 < b / a).
+         apply NonZeroSameSignDivPos.
+         apply sym_NonZeroSameSign => //.
+         lra.
+  Qed.
 
   Lemma e_del_ge2: forall del, 2%R <= @GRing.add R (e `^ del) (e `^ (-del)).
   Proof.
