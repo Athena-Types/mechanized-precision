@@ -314,47 +314,49 @@ Section RPAddSub.
   Lemma e_del_ge2: forall del, 2%R <= @GRing.add R (e `^ del) (e `^ (-del)).
   Proof.
     move=> del.
-    unfold powR.
-    simp.
-    unfold sequences.expR.
-    rewrite -sequences.lim_seriesD.
-    rewrite !ln_e !mulr1.
+    pose proof (leif_AGM2_scaled (e `^ del) (e `^ - del)).
+    destruct H.
+    clear e0.
+    rewrite -powRD in i.
+    assert (del - del = 0) by lra.
+    rewrite H in i. clear H.
+    rewrite powRr0 in i.
+    rewrite -ler_ln in i.
 
-    unfold sequences.exp_coeff.
-    unfold sequences.mk_sequence.
-    rewrite -mulN1r.
-    have test: ((
-               (fun n : nat => del ^+ n / n`!%:R) \+ (fun n : nat => (-1 * del) ^+ n / n`!%:R)) =1
-              ((fun n : nat => 2 * (if odd n then 0 else (del ^+ n / n`!%:R))))).
-    unfold "\+".
-    move=> x.
-    rewrite exprMn_comm.
-    rewrite -signr_odd.
-    destruct (odd x).
-    {
-      rewrite expr1.
-      rewrite GRing.mulN1r.
-      give_up.
-    }
-    {
-      rewrite expr0.
-      assert (2 = @GRing.add R 1%R 1%R) by lra.
-      rewrite H.
-      rewrite mulrDl.
-      rewrite !mul1r.
-      reflexivity.
-    }
-    unfold GRing.comm.
-    lra.
-    unfold GRing.add at 1.
-    unfold GRing.isNmodule.add at 1.
+    assert (4 = @GRing.exp R 2 2) by lra.
+    rewrite H in i. clear H.
+    rewrite -!powR_mulrn in i.
+    rewrite (ln_powR 2 2) in i.
+    rewrite (ln_powR ((e `^ del + e `^ (- del))) 2) in i.
+
+    assert (0 <= 1 / 2) as H0 by lra.
+    assert (0 <= 2 * @ln R 2) as H1. apply mulr_ge0. lra. apply ln_ge0. lra.
+    assert (1/2 <= 1/2) as H2 by lra.
+    pose proof (@ler_pM R (1 / 2) (1 / 2) (2 * ln 2) (2 * ln (e `^ del + e `^ (- del))) H0 H1 H2 i) as main_thm.
+    assert (forall (x : R), (1 / 2 * (2 * x)) = x) as H3. move=> y. lra.
+    rewrite !H3 in main_thm.
+
+    pose proof (e_exp_ge _ _ main_thm) as main_thm'.
+    rewrite !pow_ln_id in main_thm'.
+    apply main_thm'.
+    all: destroy.
+
+    apply ler_wpDr;
+    apply powR_ge0.
+
+    apply ltr_wpDr.
+    apply powR_ge0.
+    apply powR_gt0.
+    apply e_gt0.
+
+    apply ltr_wpDr.
+    apply powR_ge0.
+    apply powR_gt0.
+    apply e_gt0.
+
     simpl.
-    rewrite (funext test).
-
-    suff: (2 <= 2*e`^(del`^2)).
-    unfold powR at 1.
-    simp.
-    Admitted.
+    apply implybT.
+    Qed.
 
   (** *** Theorem 3.1 (core helper theorem) *)
   Theorem RPAddCore (a a' b b' : R) : a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
@@ -491,6 +493,8 @@ Section RPAddSub.
              rewrite ler_pdivlMr.
              rewrite mul1r.
              lra.
+             lra.
+             unfold NonZeroSameSign.
              lra.
           }
          }
