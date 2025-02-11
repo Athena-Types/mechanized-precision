@@ -319,9 +319,41 @@ Section RPAddSub.
     unfold sequences.expR.
     rewrite -sequences.lim_seriesD.
     rewrite !ln_e !mulr1.
-    Search (sequences.exp_coeff).
-    Search (sequences.series (_ + _)).
-    Search (sequences.exp_coeff).
+
+    unfold sequences.exp_coeff.
+    unfold sequences.mk_sequence.
+    rewrite -mulN1r.
+    have test: ((
+               (fun n : nat => del ^+ n / n`!%:R) \+ (fun n : nat => (-1 * del) ^+ n / n`!%:R)) =1
+              ((fun n : nat => 2 * (if odd n then 0 else (del ^+ n / n`!%:R))))).
+    unfold "\+".
+    move=> x.
+    rewrite exprMn_comm.
+    rewrite -signr_odd.
+    destruct (odd x).
+    {
+      rewrite expr1.
+      rewrite GRing.mulN1r.
+      give_up.
+    }
+    {
+      rewrite expr0.
+      assert (2 = @GRing.add R 1%R 1%R) by lra.
+      rewrite H.
+      rewrite mulrDl.
+      rewrite !mul1r.
+      reflexivity.
+    }
+    unfold GRing.comm.
+    lra.
+    unfold GRing.add at 1.
+    unfold GRing.isNmodule.add at 1.
+    simpl.
+    rewrite (funext test).
+
+    suff: (2 <= 2*e`^(del`^2)).
+    unfold powR at 1.
+    simp.
     Admitted.
 
   (** *** Theorem 3.1 (core helper theorem) *)
