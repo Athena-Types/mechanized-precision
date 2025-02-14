@@ -130,9 +130,9 @@ Section RPElementaryProperties.
 
   (** *** Property 2. *)
 
-  Theorem RPProp2 : forall (δ : R), (a ~ a' ; rp(α)) -> 0 <= α -> α <= δ -> (a ~ a' ; rp(δ)).
+  Theorem RPProp2 : forall (δ : R), (a ~ a' ; rp(α)) -> α <= δ -> (a ~ a' ; rp(δ)).
   Proof. rewrite /RelPrec.
-         move=> del [H2 [H3 H4]] H5 H6. repeat split; auto.
+         move=> del [H2 [H3 H4]] H6. repeat split; auto.
          rewrite (@le_trans _ _ α) => //.
          rewrite (@le_trans _ _ α) => //.
          Qed.
