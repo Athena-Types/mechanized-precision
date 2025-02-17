@@ -5,3 +5,4 @@ theories/absolute_prec.v
 theories/relative_prec.v
 theories/error_model.v
 theories/relative_prec_ops.v
+theories/relative_error.v

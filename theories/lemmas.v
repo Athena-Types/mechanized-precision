@@ -1,11 +1,10 @@
 Require Import Relation_Definitions Morphisms.
-From mathcomp Require Export all_ssreflect ssralg ssrnum.
-From mathcomp Require Export mathcomp_extra exp reals signed.
-From mathcomp Require Export boolp Rstruct.
+From mathcomp Require Import all_ssreflect ssralg ssrnum.
+From mathcomp Require Import mathcomp_extra exp reals signed.
+From mathcomp Require Import boolp Rstruct.
 
-From mathcomp.algebra_tactics Require Export ring lra.
-
-Export Order.TTheory GRing.Theory Num.Def Num.Theory.
+From mathcomp.algebra_tactics Require Import ring lra.
+Import Order.TTheory GRing.Theory Num.Def Num.Theory.
 
 Local Open Scope ring_scope.
 
