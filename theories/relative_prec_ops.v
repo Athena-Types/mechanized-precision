@@ -1,4 +1,4 @@
-From ErrorMetrics Require Import error_model relative_prec.
+From ErrorMetrics Require Import error_model relative_prec lemmas.
 From Flocq Require Import Core.
 From Coq Require Import Reals Psatz List.
 
