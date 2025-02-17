@@ -9,29 +9,29 @@ Export Order.TTheory GRing.Theory Num.Def Num.Theory.
 
 Local Open Scope ring_scope.
 
+Definition e {R : realType} := @sequences.expR R 1.
+
 Section HelperLemmas.
   Context {R : realType}.
 
-  Definition e := @sequences.expR R 1.
-
-  Lemma ln_e : ln e = 1.
+  Lemma ln_e : ln (@e R) = 1.
   Proof.
     unfold e.
     rewrite expRK => //.
   Qed.
 
-  Lemma e_gt0: 0 < e.
+  Lemma e_gt0: 0 < (@e R).
   Proof.
     unfold e.
     rewrite expR_gt0 => //.
   Qed.
 
-  Lemma ln_pow_id : forall u, ln (R:=R) (e `^ u) = u.
+  Lemma ln_pow_id : forall u, ln (R:=R) ((@e R) `^ u) = u.
   Proof. move=> u. unfold powR.
          rewrite expR_eq0. rewrite (@expRK R) ln_e mulr1 => //.
   Qed.
 
-  Lemma pow_ln_id : forall u, 0 < u -> (e `^ (ln u)) = u.
+  Lemma pow_ln_id : forall u, 0 < u -> ((@e R) `^ (ln u)) = u.
   Proof. move=> u H1.
          unfold powR.
          rewrite expR_eq0.
@@ -333,7 +333,7 @@ Section HelperLemmas.
   Proof. move=> x y H1. rewrite mulrC. rewrite div_mul_id => //.
          Qed.
 
-  Lemma e_ne0: (e == 0) = false.
+  Lemma e_ne0: (@e R == 0) = false.
   Proof. rewrite expR_eq0. reflexivity. Qed.
 
   Lemma ln_norm_sym : (forall (a b : R), NonZeroSameSign a b -> (`|ln (R:=R) (a / b)| = `|ln (R:=R) (b / a)|)).
