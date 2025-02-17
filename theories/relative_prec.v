@@ -528,9 +528,155 @@ Section RPAddSub.
          }
          Qed.
 
+  (** **** Corollary 1 for Theorem 3.1. *)
+  Corollary RPAdd1 (a a' b b' : R) :
+    NonZeroSameSign a b -> a ~ a' ; rp(α) -> b ~ b' ; rp(β) ->
+                  a + b ~ a' + b'; rp(Num.max α β).
+  Proof. move=> NSSS A1 A2.
+         have rp_thm: a + b ~ a' + b'; rp(ln((a' * (e `^ α) +  b' * (e `^ β)) / (a' + b') )).
+         apply (RPAdd a a' b b' NSSS A1 A2).
+         unfold RelPrec in *.
+         move: rp_thm => [ltP [NSSSp ubP]].
+         move: A1 => [lt_alpha [NSSS1 H1]]; move: A2 => [lt_beta [NSSS2 H2]].
+         unfold NonZeroSameSign in *.
+         split; try split.
+         {
+           unfold maxr.
+           destruct (α < β ); auto.
+         }
+         {
+           auto.
+         }
+         {
+           suff ub: ln (R:=R) ((a' * e `^ α + b' * e `^ β) / (a' + b')) <= maxr α β.
+           apply (le_trans ubP ub).
+           unfold maxr.
+           case: (@real_ltP _ α β  _ _) => //= alpha_ltP.
+           {
+             suff ub_beta: ln (R:=R) ((a' * e `^ α + b' * e `^ β) / (a' + b')) <= ln (R:=R) ((a' * e `^ β  + b' * e `^ β) / (a' + b')).
+             suff ub_beta': ln (R:=R) ((a' * e `^ β  + b' * e `^ β) / (a' + b')) <= β.
+             apply (le_trans ub_beta ub_beta').
+             rewrite -mulrDl.
+             rewrite mulrC mulrA.
+             rewrite mulVf.
+             rewrite mul1r.
+             rewrite ln_pow_id.
+             auto.
+             lra.
+
+             case: NSSSp => NSSSp'.
+             {
+              rewrite ler_ln => //.
+              rewrite ler_pM => //.
+              apply addr_ge0; apply mulr_ge0; try lra; try apply powR_ge0.
+              rewrite invr_ge0; lra.
+
+              apply lerD; apply ler_pM; try lra; try apply powR_ge0.
+              apply e_exp_ge; lra.
+
+              destroy.
+              apply addr_gt0; apply mulr_gt0; try lra; try apply powR_gt0; try apply e_gt0.
+              rewrite invr_gt0; lra.
+
+              destroy.
+              apply addr_gt0; apply mulr_gt0; try lra; try apply powR_gt0; try apply e_gt0.
+              rewrite invr_gt0; lra.
+             }
+             {
+               remember (-1 * a') as n'.
+               remember (-1 * b') as m'.
+               assert (a' = -1 * n') by lra.
+               assert (b' = -1 * m') by lra.
+               assert (0 < n' + m') by lra.
+               rewrite !H !H0.
+               rewrite -!mulrA.
+               rewrite -!mulrDr.
+               rewrite !mulN1r.
+               rewrite !divrNN.
+
+               rewrite ler_ln => //.
+               rewrite ler_pM => //.
+               apply addr_ge0; apply mulr_ge0; try lra; try apply powR_ge0.
+               rewrite invr_ge0; lra.
+
+               apply lerD; apply ler_pM; try lra; try apply powR_ge0.
+               apply e_exp_ge; lra.
+
+               destroy.
+               apply addr_gt0; apply mulr_gt0; try lra; try apply powR_gt0; try apply e_gt0.
+               rewrite invr_gt0; lra.
+
+               destroy.
+               apply addr_gt0; apply mulr_gt0; try lra; try apply powR_gt0; try apply e_gt0.
+               rewrite invr_gt0; lra.
+             }
+           }
+           {
+             suff ub_alpha: ln (R:=R) ((a' * e `^ α + b' * e `^ β) / (a' + b')) <= ln (R:=R) ((a' * e `^ α + b' * e `^ α) / (a' + b')).
+             suff ub_alpha': ln (R:=R) ((a' * e `^ α + b' * e `^ α) / (a' + b')) <= α.
+
+             apply (le_trans ub_alpha ub_alpha').
+             rewrite -mulrDl.
+             rewrite mulrC mulrA.
+             rewrite mulVf.
+             rewrite mul1r.
+             rewrite ln_pow_id.
+             auto.
+             lra.
+
+             case: NSSSp => NSSSp'.
+             {
+              rewrite ler_ln => //.
+              rewrite ler_pM => //.
+              apply addr_ge0; apply mulr_ge0; try lra; try apply powR_ge0.
+              rewrite invr_ge0; lra.
+
+              apply lerD; apply ler_pM; try lra; try apply powR_ge0.
+              apply e_exp_ge; lra.
+
+              destroy.
+              apply addr_gt0; apply mulr_gt0; try lra; try apply powR_gt0; try apply e_gt0.
+              rewrite invr_gt0; lra.
+
+              destroy.
+              apply addr_gt0; apply mulr_gt0; try lra; try apply powR_gt0; try apply e_gt0.
+              rewrite invr_gt0; lra.
+             }
+             {
+               remember (-1 * a') as n'.
+               remember (-1 * b') as m'.
+               assert (a' = -1 * n') by lra.
+               assert (b' = -1 * m') by lra.
+               assert (0 < n' + m') by lra.
+               rewrite !H !H0.
+               rewrite -!mulrA.
+               rewrite -!mulrDr.
+               rewrite !mulN1r.
+               rewrite !divrNN.
+
+               rewrite ler_ln => //.
+               rewrite ler_pM => //.
+               apply addr_ge0; apply mulr_ge0; try lra; try apply powR_ge0.
+               rewrite invr_ge0; lra.
+
+               apply lerD; apply ler_pM; try lra; try apply powR_ge0.
+               apply e_exp_ge; lra.
+
+               destroy.
+               apply addr_gt0; apply mulr_gt0; try lra; try apply powR_gt0; try apply e_gt0.
+               rewrite invr_gt0; lra.
+
+               destroy.
+               apply addr_gt0; apply mulr_gt0; try lra; try apply powR_gt0; try apply e_gt0.
+               rewrite invr_gt0; lra.
+             }
+           }
+         }
+    Qed.
+
   (** *** Theorem 3.2 *)
   Theorem RPSub (a a' b b' : R) : a ~ a' ; rp(α) -> b ~ b' ; rp(β) -> `|a'| * (e `^ -α) > `|b'| * (e `^ β) ->
-                  a + b ~ a' + b'; rp(ln(a' * (e `^ α) -  b * (e `^ -β) / (a' - b') )).
+                  a + b ~ a' + b'; rp(ln(a' * (e `^ α) -  b' * (e `^ -β) / (a' - b') )).
     Admitted.
 
 End RPAddSub.
