@@ -12,6 +12,36 @@ Local Open Scope ring_scope.
 Section HelperLemmas.
   Context {R : realType}.
 
+  Definition e := @sequences.expR R 1.
+
+  Lemma ln_e : ln e = 1.
+  Proof.
+    unfold e.
+    rewrite expRK => //.
+  Qed.
+
+  Lemma e_gt0: 0 < e.
+  Proof.
+    unfold e.
+    rewrite expR_gt0 => //.
+  Qed.
+
+  Lemma ln_pow_id : forall u, ln (R:=R) (e `^ u) = u.
+  Proof. move=> u. unfold powR.
+         rewrite expR_eq0. rewrite (@expRK R) ln_e mulr1 => //.
+  Qed.
+
+  Lemma pow_ln_id : forall u, 0 < u -> (e `^ (ln u)) = u.
+  Proof. move=> u H1.
+         unfold powR.
+         rewrite expR_eq0.
+         rewrite expRM (@lnK R). rewrite ln_e. rewrite powRr1 => //.
+         lra.
+         have gt0: (0 < u) by lra.
+         apply gt0.
+         Qed.
+
+
   Fact abs_eq : forall (a b : R), a = b -> `|a| = `|b|.
   Proof. move => a b H1; by rewrite H1. Qed.
 
@@ -277,4 +307,115 @@ Section HelperLemmas.
     rewrite ln_div => //.
   Qed.
 
+  Lemma e_exp_ge: forall (a b : R), a <= b  -> (e `^ a) <= (e `^ b).
+  Proof.
+  move => a b H1.
+  rewrite -ler_ln; [rewrite !ln_powR ln_e; nra | | ].
+  all : rewrite posrE; apply powR_gt0, expR_gt0.
+  Qed.
+
+  Lemma e_exp_ge1 : forall (p : R), 0 <= p -> 1 <= e `^ p.
+
+  Proof. move=> p H1. rewrite -ler_ln;[rewrite ln1 ln_powR ln_e; nra | |].
+  all: rewrite posrE; try nra; apply powR_gt0, expR_gt0. Qed.
+
+  Lemma e_exp_bigger: forall (x y: R), 0 <= x -> 0 <= y -> x <= x * e `^ y.
+  Proof. move=> x y H1 H2.
+         apply ler_peMr => //.
+         apply e_exp_ge1 => //.
+  Qed.
+
+  Lemma div_mul_id: (forall (x y : R), x != 0 -> ( y / x ) * x = y).
+  Proof. move=>x y H1. rewrite -mulrA. field. auto. Qed.
+  Lemma div_mul: (forall (x : R), x != 0 -> ( 1 / x ) * x = x / x).
+  Proof. move=> x H1. rewrite div_mul_id => //. rewrite mulfV => //. Qed.
+  Lemma div_mul_y: (forall (x y : R), x != 0 -> ( x * (y / x) ) = y).
+  Proof. move=> x y H1. rewrite mulrC. rewrite div_mul_id => //.
+         Qed.
+
+  Lemma e_ne0: (e == 0) = false.
+  Proof. rewrite expR_eq0. reflexivity. Qed.
+
+  Lemma ln_norm_sym : (forall (a b : R), NonZeroSameSign a b -> (`|ln (R:=R) (a / b)| = `|ln (R:=R) (b / a)|)).
+  Proof. move=> a b H1.
+         rewrite -invf_div.
+         rewrite -(@powR_inv1 _ (b / a)).
+         rewrite ln_powR.
+         rewrite mulN1r.
+         rewrite normrN.
+         reflexivity.
+         assert (0 < b / a).
+         apply NonZeroSameSignDivPos.
+         apply sym_NonZeroSameSign => //.
+         lra.
+  Qed.
+
+  Lemma e_del_ge2: forall del, 2%R <= @GRing.add R (e `^ del) (e `^ (-del)).
+  Proof.
+    move=> del.
+    pose proof (leif_AGM2_scaled (e `^ del) (e `^ - del)).
+    destruct H.
+    clear e0.
+    rewrite -powRD in i.
+    assert (del - del = 0) by lra.
+    rewrite H in i. clear H.
+    rewrite powRr0 in i.
+    rewrite -ler_ln in i.
+
+    assert (4 = @GRing.exp R 2 2) by lra.
+    rewrite H in i. clear H.
+    rewrite -!powR_mulrn in i.
+    rewrite (ln_powR 2 2) in i.
+    rewrite (ln_powR ((e `^ del + e `^ (- del))) 2) in i.
+
+    assert (0 <= 1 / 2) as H0 by lra.
+    assert (0 <= 2 * @ln R 2) as H1. apply mulr_ge0. lra. apply ln_ge0. lra.
+    assert (1/2 <= 1/2) as H2 by lra.
+    pose proof (@ler_pM R (1 / 2) (1 / 2) (2 * ln 2) (2 * ln (e `^ del + e `^ (- del))) H0 H1 H2 i) as main_thm.
+    assert (forall (x : R), (1 / 2 * (2 * x)) = x) as H3. move=> y. lra.
+    rewrite !H3 in main_thm.
+
+    pose proof (e_exp_ge _ _ main_thm) as main_thm'.
+    rewrite !pow_ln_id in main_thm'.
+    apply main_thm'.
+    all:
+      repeat progress
+      (try apply addr_gt0;
+      try apply addr_ge0;
+      try apply mulr_gt0;
+      try apply e_ge0;
+      try apply powR_gt0;
+      try apply powR_ge0;
+      try apply e_gt0;
+      try lra).
+
+    pose proof e_gt0.
+    assert (e != 0) by lra.
+    rewrite H0.
+    apply implybT.
+    Qed.
+
 End HelperLemmas.
+
+Ltac simp :=
+  let H1 := fresh in
+  let H2 := fresh in
+  match goal with
+    | [ |- context[?X \is Num.pos] ] => suff H1: (0 < X); apply H1
+    | [ |- context[e `^ ?X != 0] ] => assert (0 < @e _ `^ X) as H1 by (apply powR_gt0; apply e_gt0); lra; clear H1
+    | [ |- context[@e _ == 0] ] => rewrite e_ne0
+    | [ |- context[sequences.expR (ln (R:=_) _ )] ] => rewrite lnK
+    | [ |- context[(ln (R:=_) (sequences.expR _) )] ] => rewrite expRK
+    (* | [ |- context[?X^-1] ] => rewrite -(@div1r _ X) *)
+  end.
+
+Ltac destroy' :=
+  let H1 := fresh in
+  let H2 := fresh in
+  match goal with
+    | [ |- context[0 < ?X * ?Y] ] => suff H1: (0 < X); suff H2: (0 < Y); lra
+    | [ |- context[?B <= ?B * (e `^ ?Y)]] => rewrite e_exp_bigger; try lra
+    (* | [ |- context[- ?X <= - ?Y]] => have H1: 0 - Y = - Y by lra; have H2: 0 - X = - X by lra; rewrite H1 H2; apply lerB; try auto *)
+  end.
+
+Ltac destroy := try repeat progress simp; try repeat destroy'; try repeat apply addr_gt0 => //; try repeat apply mulr_gt0 => //; try apply powR_gt0; try apply e_gt0; try lra.
